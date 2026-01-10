@@ -20,35 +20,50 @@ export const syncShelterluvCats = onSchedule(
         try {
             const apiKey = shelterluvApiKey.value();
 
-            const response = await axios.get(
-                "https://www.shelterluv.com/api/v1/animals",
-                {
-                    headers: {
-                        "X-API-Key": apiKey,
-                        Accept: "application/json",
-                    },
-                    timeout: 10000,
-                }
-            );
+            const limit = 100;
+            let offset = 0;
+            let has_more = true;
+            const allCats: ShelterluvCat[] = [];
 
-            const cats = response.data;
-
-            if (!Array.isArray(cats)) {
-                throw new Error("Unexpected Shelterluv API response format.");
+            while (has_more) {
+                const response = await axios.get(
+                    "https://www.shelterluv.com/api/v1/animals",
+                    {
+                        headers: {
+                            "x-api-key": apiKey,
+                        },
+                        params: {
+                            status_type: "in custody",
+                            offset: offset,
+                            limit: limit,
+                        },
+                        timeout: 10000,
+                    }
+                );
+                const cats = response.data.animals;
+                allCats.push(...cats);
+                has_more = response.data.has_more;
+                offset += limit;
             }
+
+            logger.info("Cats fetched from Shelterluv: ", allCats.length);
 
             const batch = db.batch();
 
-            cats.forEach((cat: ShelterluvCat) => {
-                const ref = db.collection("cats").doc(cat.id);
+            allCats.forEach((cat: ShelterluvCat) => {
+                const ref = db.collection("cats").doc(cat.ID);
 
                 batch.set(
                     ref,
                     {
-                        name: cat.name,
-                        status: cat.status,
-                        photoUrl: cat.photo_url ?? null,
-                        intakeDate: cat.intake_date ?? null,
+                        id: cat.ID,
+                        name: cat.Name,
+                        sex: cat.Sex ?? null,
+                        color: cat.Color ?? null,
+                        pattern: cat.Pattern ?? null,
+                        photoUrl: cat.CoverPhoto ?? null,
+                        intakeDate: cat.LastIntakeUnixTime ?? null,
+                        inFoster: cat.InFoster,
                         lastSynced: FieldValue.serverTimestamp()
                     },
                     { merge: true }
@@ -58,7 +73,7 @@ export const syncShelterluvCats = onSchedule(
             await batch.commit();
 
             logger.info(
-                `Shelterluv sync completed: ${cats.length} cats updated.`
+                `Shelterluv sync completed: ${allCats.length} cats updated.`
             );
 
         } catch (error) {
