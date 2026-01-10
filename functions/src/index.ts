@@ -7,9 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+import { setGlobalOptions } from "firebase-functions/v2";
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -31,5 +29,4 @@ setGlobalOptions({ maxInstances: 10 });
 //   response.send("Hello from Firebase!");
 // });
 
-import { syncShelterluvCats } from "./shelterluv";
-export { syncShelterluvCats };
+export { syncShelterluvCats } from "./shelterluv.js";

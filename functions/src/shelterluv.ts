@@ -1,13 +1,14 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
-import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
-
+import { initializeApp } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { logger } from "firebase-functions/v2";
+import { ShelterluvCat } from "./types/cat-info.js";
 import axios from "axios";
 
-admin.initializeApp();
+initializeApp();
 
-const db = admin.firestore();
+const db = getFirestore();
 const shelterluvApiKey = defineSecret("SHELTERLUV_API_KEY");
 
 export const syncShelterluvCats = onSchedule(
@@ -38,7 +39,7 @@ export const syncShelterluvCats = onSchedule(
 
             const batch = db.batch();
 
-            cats.forEach((cat: any) => {
+            cats.forEach((cat: ShelterluvCat) => {
                 const ref = db.collection("cats").doc(cat.id);
 
                 batch.set(
@@ -48,7 +49,7 @@ export const syncShelterluvCats = onSchedule(
                         status: cat.status,
                         photoUrl: cat.photo_url ?? null,
                         intakeDate: cat.intake_date ?? null,
-                        lastSynced: admin.firestore.FieldValue.serverTimestamp()
+                        lastSynced: FieldValue.serverTimestamp()
                     },
                     { merge: true }
                 );
@@ -56,18 +57,18 @@ export const syncShelterluvCats = onSchedule(
 
             await batch.commit();
 
-            functions.logger.info(
+            logger.info(
                 `Shelterluv sync completed: ${cats.length} cats updated.`
             );
 
-        } catch (error: any) {
+        } catch (error) {
             if (axios.isAxiosError(error)) {
-                functions.logger.error("Shelterluv API error", {
+                logger.error("Shelterluv API error", {
                     status: error.response?.status,
                     data: error.response?.data
                 });
             } else {
-                functions.logger.error("Unexpected error during Shelterluv sync.", error);
+                logger.error("Unexpected error during Shelterluv sync.", error);
             }
 
             throw error; // ensures function reports failure
