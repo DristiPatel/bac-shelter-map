@@ -5,6 +5,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from "firebase-functions/v2";
 import { ShelterluvCat } from "./types/cat-info.js";
 import axios from "axios";
+import { off } from "process";
 
 initializeApp();
 
