@@ -8,8 +8,7 @@ import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from 
 import { rooms } from "./components/Floorplan";
 import { CatList } from "./components/CatList";
 import { CatDragPreview } from "./components/CatDragPreview";
-
-
+import { updateCatRoom } from "./RoomUpdater";
 
 function App() {
   const [cats, setCats] = useState<Cat[]>([]);
@@ -60,29 +59,43 @@ function App() {
     if (cat) setActiveCat(cat);
   }
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
+    setActiveCat(null);
     if (!over) {
-      setActiveCat(null);
       return;
     }
 
+    const newRoomId =
+      over.id === "shelter-list"
+        ? null
+        : (over.id as string);
+
+    // Optimistic UI update
     setCats((prev) =>
-      prev.map((cat) => {
-        if (cat.id !== active.id) return cat;
-
-        // Dropped into shelter list → unassign
-        if (over.id === "shelter-list") {
-          return { ...cat, roomId: null };
-        }
-
-        // Dropped into a room
-        return { ...cat, roomId: over.id as string };
-      })
+      prev.map((cat) =>
+        cat.id === active.id
+          ? { ...cat, roomId: newRoomId }
+          : cat
+      )
     );
 
-    setActiveCat(null);
+    try {
+      await updateCatRoom(active.id as string, newRoomId);
+    } catch (error) {
+      console.error("Failed to update cat room", error);
+
+      // Rollback on failure
+      setCats((prev) =>
+        prev.map((cat) =>
+          cat.id === active.id
+            ? { ...cat, roomId: null }
+            : cat
+        )
+      );
+    }
+
   }
 
 
