@@ -3,7 +3,7 @@ import { collection } from "firebase/firestore";
 import { db } from "./firebase";
 import { onSnapshot } from "firebase/firestore";
 import type { Cat } from "./types/Cat";
-import { Floorplan } from "./components/Floorplan";
+import { FloorPlan } from "./components/Floorplan";
 import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { rooms } from "./components/Floorplan";
 import { CatList } from "./components/CatList";
@@ -41,15 +41,18 @@ function App() {
     return () => unsub();
   }, []);
 
-  /**
-   * Split cats into shelter vs foster
-   */
+  // Split cats into shelter vs foster
   const { shelterCats, fosterCats } = useMemo(() => {
     return {
       shelterCats: cats.filter((c) => !c.inFoster),
       fosterCats: cats.filter((c) => c.inFoster),
     };
   }, [cats]);
+
+  // Additionally, get unassigned shelter cats for the list
+  const unassignedShelterCats = useMemo(() => {
+    return shelterCats.filter((cat) => !cat.roomId);
+  }, [shelterCats]);
 
 
   function handleDragStart(event: DragStartEvent) {
@@ -60,17 +63,24 @@ function App() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
-    if (over?.id && active.id !== over.id) {
-      const roomId = over.id as string;
-
-      setCats((prev) =>
-        prev.map((cat) =>
-          cat.id === active.id
-            ? { ...cat, roomId }
-            : cat
-        )
-      );
+    if (!over) {
+      setActiveCat(null);
+      return;
     }
+
+    setCats((prev) =>
+      prev.map((cat) => {
+        if (cat.id !== active.id) return cat;
+
+        // Dropped into shelter list → unassign
+        if (over.id === "shelter-list") {
+          return { ...cat, roomId: null };
+        }
+
+        // Dropped into a room
+        return { ...cat, roomId: over.id as string };
+      })
+    );
 
     setActiveCat(null);
   }
@@ -98,14 +108,16 @@ function App() {
         {/* 🐈 In-Shelter (Draggable) */}
         <CatList
           title="🏠 In Shelter"
-          cats={shelterCats}
+          cats={unassignedShelterCats}
           draggable
+          droppableId="shelter-list"
+
         />
 
         {/* 🗺️ Floorplan */}
         <section>
           <h3>Floorplan</h3>
-          <Floorplan rooms={rooms} cats={shelterCats} />
+          <FloorPlan rooms={rooms} cats={shelterCats} />
         </section>
 
         {/* 🏡 Foster (Read-only) */}

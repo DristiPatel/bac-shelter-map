@@ -8,7 +8,7 @@ export function CatDragPreview({ cat }: Props) {
   return (
     <div
       style={{
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
         gap: "0.5rem",
         padding: "0.5rem 0.75rem",
