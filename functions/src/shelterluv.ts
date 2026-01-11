@@ -48,6 +48,12 @@ export const syncShelterluvCats = onSchedule(
 
             logger.info("Cats fetched from Shelterluv: ", allCats.length);
 
+            const apiCatIds = new Set<string>();
+
+            for (const cat of allCats) {
+                apiCatIds.add(cat.ID.toString());
+            }
+
             const batch = db.batch();
 
             allCats.forEach((cat: ShelterluvCat) => {
@@ -64,16 +70,34 @@ export const syncShelterluvCats = onSchedule(
                         photoUrl: cat.CoverPhoto ?? null,
                         intakeDate: cat.LastIntakeUnixTime ?? null,
                         inFoster: cat.InFoster,
+                        status: "in_custody",
                         lastSynced: FieldValue.serverTimestamp()
                     },
                     { merge: true }
                 );
             });
 
+            const snapshot = await db
+                .collection("cats")
+                .where("status", "==", "in_custody")
+                .get();
+
+            logger.info("Shelterluv cats in DB to check for adoption: ", snapshot.size);
+
+            snapshot.docs.forEach((doc) => {
+                if (!apiCatIds.has(doc.id)) {
+                    batch.update(doc.ref, {
+                        status: "adopted",
+                        roomId: null,        // remove from floorplan
+                        adoptedAt: new Date(),
+                    });
+                }
+            });
+
             await batch.commit();
 
             logger.info(
-                `Shelterluv sync completed: ${allCats.length} cats updated.`
+                `Shelterluv sync completed.`
             );
 
         } catch (error) {
