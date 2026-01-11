@@ -40,11 +40,16 @@ function App() {
     return () => unsub();
   }, []);
 
+  // Get in custody cats (not adopted yet)
+  const inCustodyCats = cats.filter(
+    (c) => c.status === "in_custody"
+  );
+
   // Split cats into shelter vs foster
   const { shelterCats, fosterCats } = useMemo(() => {
     return {
-      shelterCats: cats.filter((c) => !c.inFoster),
-      fosterCats: cats.filter((c) => c.inFoster),
+      shelterCats: inCustodyCats.filter((c) => !c.inFoster),
+      fosterCats: inCustodyCats.filter((c) => c.inFoster),
     };
   }, [cats]);
 

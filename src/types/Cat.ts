@@ -4,4 +4,5 @@ export interface Cat {
   photoUrl?: string | null;
   inFoster: boolean;
   roomId?: string | null;
+  status: "in_custody" | "adopted";
 }
