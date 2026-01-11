@@ -1,13 +1,13 @@
-interface Room {
-    id: string;
-    label: string;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+import { useDroppable } from "@dnd-kit/core";
+import type { Room } from "../types/Room";
+import type { Cat } from "../types/Cat";
+
+interface Props {
+  rooms: Room[];
+  cats: Cat[];
 }
 
-const rooms: Room[] = [
+export const rooms: Room[] = [
     // Room A (Kennels)
     { id: "room-a-k1", label: "Room A Kennel 1", x: 8, y: 136, width: 184, height: 40 },
     { id: "room-a-k2", label: "Room A Kennel 2", x: 8, y: 176, width: 184, height: 40 },
@@ -28,44 +28,70 @@ const rooms: Room[] = [
 
 ];
 
-export function Floorplan() {
-    return (
-        <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 800 392"
-        //   style={{ border: "1px solid #ccc", background: "#fafafa" }}
-        >
-            {rooms.map((room) => (
-                <g key={room.id}>
-                    {/* Room box */}
-                    <rect
-                        x={room.x}
-                        y={room.y}
-                        width={room.width}
-                        height={room.height}
-                        rx={8}
-                        fill="#fff"
-                        stroke="#333"
-                        strokeWidth={2}
-                    />
 
-                    {/* Room label */}
-                    <text
-                        x={room.x + 10}
-                        y={room.y + 10}
-                        fontFamily="monospace"
-                        fontWeight="bold"
-                        textAnchor="start"
-                        dominantBaseline="middle"
-                        fontSize={10}
-                        fill="#333"
-                        pointerEvents="none"
-                    >
-                        {room.label}
-                    </text>
-                </g>
-            ))}
-        </svg>
-    );
+export function Floorplan({ rooms, cats }: Props) {
+  return (
+    <svg
+      viewBox="0 0 800 396"
+      width="100%"
+      height="100%"
+    >
+      {rooms.map((room) => (
+        <RoomDropZone key={room.id} room={room} />
+      ))}
+
+      {/* Render cats snapped into rooms */}
+      {cats
+        .filter((cat) => cat.roomId)
+        .map((cat) => {
+          const room = rooms.find((r) => r.id === cat.roomId);
+          if (!room) return null;
+
+          return (
+            <image
+              key={cat.id}
+              href={cat.photoUrl ?? "/placeholder-cat.png"}
+              x={room.x + room.width / 2 - 16}
+              y={room.y + room.height / 2 - 16}
+              width={32}
+              height={32}
+              clipPath="circle(16px at 16px 16px)"
+            />
+          );
+        })}
+    </svg>
+  );
+}
+
+function RoomDropZone({ room }: { room: Room }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: room.id,
+  });
+
+  return (
+    <g ref={setNodeRef as any}>
+      <rect
+        x={room.x}
+        y={room.y}
+        width={room.width}
+        height={room.height}
+        rx={8}
+        fill={isOver ? "#e6f2ff" : "#fff"}
+        stroke="#333"
+        strokeWidth={2}
+      />
+      <text
+        x={room.x + 10}
+        y={room.y + 10}
+        fontFamily="monospace"
+        fontWeight={"bold"}
+        textAnchor="start"
+        dominantBaseline="middle"
+        fontSize={10}
+        pointerEvents="none"
+      >
+        {room.label}
+      </text>
+    </g>
+  );
 }

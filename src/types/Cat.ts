@@ -3,4 +3,5 @@ export interface Cat {
   name: string;
   photoUrl?: string | null;
   inFoster: boolean;
+  roomId?: string | null;
 }
