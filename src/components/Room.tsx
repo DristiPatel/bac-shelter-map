@@ -31,6 +31,8 @@ export function Room({ room, cats }: Props) {
         fontSize={12}
         fill="#333"
         pointerEvents="none"
+        fontFamily="monospace"
+        fontWeight="bold"
       >
         {room.label}
       </text>
