@@ -51,13 +51,17 @@ function App() {
       shelterCats: inCustodyCats.filter((c) => !c.inFoster),
       fosterCats: inCustodyCats.filter((c) => c.inFoster),
     };
-  }, [cats]);
+  }, [inCustodyCats]);
 
-  // Additionally, get unassigned shelter cats for the list
+  // Get unassigned shelter cats for the list
   const unassignedShelterCats = useMemo(() => {
     return shelterCats.filter((cat) => !cat.roomId);
   }, [shelterCats]);
 
+   // Get unassigned foster cats for the list
+  const unassignedFosterCats = useMemo(() => {
+    return fosterCats.filter((cat) => !cat.roomId);
+  }, [fosterCats]);
 
   function handleDragStart(event: DragStartEvent) {
     const cat = cats.find((c) => c.id === event.active.id);
@@ -73,7 +77,7 @@ function App() {
     }
 
     const newRoomId =
-      over.id === "shelter-list"
+      over.id === "shelter-list" || over.id === "foster-list"
         ? null
         : (over.id as string);
 
@@ -135,13 +139,15 @@ function App() {
         {/* 🗺️ Floorplan */}
         <section>
           <h3>Floorplan</h3>
-          <FloorPlan rooms={rooms} cats={shelterCats} />
+          <FloorPlan rooms={rooms} cats={inCustodyCats} />
         </section>
 
         {/* 🏡 Foster (Read-only) */}
         <CatList
           title="🏡 In Foster"
-          cats={fosterCats}
+          cats={unassignedFosterCats}
+           draggable
+          droppableId="foster-list"
         />
       </div>
 
