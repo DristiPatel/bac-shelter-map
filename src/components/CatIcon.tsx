@@ -47,6 +47,7 @@ export function CatIcon({ cat, assigned = false }: Props) {
                     textOverflow: "ellipsis",
                     fontSize: assigned ? "0.55rem" : "1rem", // Optional: smaller text when assigned
                     maxWidth: assigned ? "50px" : "none",    // Keeps the column layout neat
+                    color: "#FFF"
                 }}
                 title={cat.name}
             >
