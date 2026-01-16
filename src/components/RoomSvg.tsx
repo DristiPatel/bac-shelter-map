@@ -80,6 +80,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     <g transform={`translate(${room.x}, ${room.y})`}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
       >
 
       {/* Room outline */}
