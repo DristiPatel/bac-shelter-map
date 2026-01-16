@@ -13,7 +13,24 @@ interface RoomProps {
 }
 
 export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: room.id });
+  /* ---------------- DROPPABLES ---------------- */
+
+  const wholeDrop = useDroppable({
+    id: room.id,
+    disabled: room.divided || editMode,
+  });
+
+  const leftDrop = useDroppable({
+    id: `${room.id}-left`,
+    disabled: !room.divided || editMode,
+  });
+
+  const rightDrop = useDroppable({
+    id: `${room.id}-right`,
+    disabled: !room.divided || editMode,
+  });
+
+  /* ---------------- DRAG / RESIZE STATE ---------------- */
 
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
@@ -75,13 +92,24 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     startRoom.current = null;
   }
 
+  /* ---------------- CAT GROUPING ---------------- */
+
+  const leftCats = cats.filter(
+    (c) => !room.divided || c.dividerSide !== "right"
+  );
+
+  const rightCats = cats.filter(
+    (c) => room.divided && c.dividerSide === "right"
+  );
+
+  /* ---------------- RENDER ---------------- */
 
   return (
     <g transform={`translate(${room.x}, ${room.y})`}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
-      >
+    >
 
       {/* Room outline */}
       <rect
@@ -89,12 +117,30 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         height={room.height}
         rx={8}
         ry={8}
-        fill={isOver ? "#eef6ff" : "#868282ff"}
+        fill={
+          wholeDrop.isOver || leftDrop.isOver || rightDrop.isOver
+            ? "#eef6ff"
+            : "#868282ff"
+        }
         stroke="#666"
         strokeWidth={2}
         cursor={editMode ? "move" : "default"}
         onMouseDown={onMouseDownMove}
       />
+
+      {/* Divider */}
+      {room.divided && (
+        <line
+          x1={room.width / 2}
+          y1={0}
+          x2={room.width / 2}
+          y2={room.height}
+          stroke="#444"
+          strokeDasharray="4 3"
+          strokeWidth={1}
+          pointerEvents="none"
+        />
+      )}
 
       {/* Room label */}
       <text
@@ -109,7 +155,30 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         {room.label}
       </text>
 
-      {/* HTML layout layer */}
+      {/* Divider toggle */}
+      {editMode && (
+        <foreignObject
+          x={room.width - 90}
+          y={4}
+          width={85}
+          height={24}
+        >
+          <button
+            style={{ fontSize: 8 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCommit({
+                ...room,
+                divided: !room.divided,
+              });
+            }}
+          >
+            {room.divided ? "Remove Divider" : "Add Divider"}
+          </button>
+        </foreignObject>
+      )}
+
+      {/* Cat Droppable Area */}
       <foreignObject
         x={0}
         y={24}
@@ -117,40 +186,56 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         height={room.height - 24}
       >
         <div
-          ref={setNodeRef}
+          ref={
+            room.divided
+              ? undefined
+              : wholeDrop.setNodeRef
+          }
           style={{
             width: "100%",
             height: "100%",
+            display: "grid",
+            gridTemplateColumns: room.divided ? "1fr 1fr" : "1fr",
+            gridAutoRows: "60px",
+            columnGap: room.divided ? "6px" : "0px",
             padding: 2,
             boxSizing: "border-box",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(50px, 1fr))",
-            gridAutoRows: "60px",
-            // gap: 4,
             alignContent: "start",
           }}
         >
-          {cats.map((cat) => (
-            <CatIcon key={cat.id} cat={cat} assigned={true} />
-          ))}
+          {/* LEFT */}
+          <div ref={room.divided ? leftDrop.setNodeRef : undefined}>
+            {leftCats.map((cat) => (
+              <CatIcon key={cat.id} cat={cat} />
+            ))}
+          </div>
+          
+          {/* RIGHT */}
+          {room.divided && (
+            <div ref={rightDrop.setNodeRef}>
+              {rightCats.map((cat) => (
+                <CatIcon key={cat.id} cat={cat} />
+              ))}
+            </div>
+          )}
         </div>
       </foreignObject>
 
       {/* Resize handle */}
       {editMode && (
-      <rect
-        x={room.width - 10}
-        y={room.height - 10}
-        width={10}
-        height={10}
-        fill="#ccc"
-        stroke="#999"
-        strokeWidth={1}
-        rx={2}
-        ry={2}
-        cursor={editMode ? "nwse-resize" : "default"}
-        onMouseDown={onMouseDownResize}
-      />)}
+        <rect
+          x={room.width - 10}
+          y={room.height - 10}
+          width={10}
+          height={10}
+          fill="#ccc"
+          stroke="#999"
+          strokeWidth={1}
+          rx={2}
+          ry={2}
+          cursor={editMode ? "nwse-resize" : "default"}
+          onMouseDown={onMouseDownResize}
+        />)}
     </g>
   );
 }

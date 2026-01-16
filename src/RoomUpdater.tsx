@@ -3,12 +3,14 @@ import { db } from "./firebase";
 
 export async function updateCatRoom(
   catId: string,
-  roomId: string | null
+  roomId: string | null,
+  dividerSide?: "left" | "right"
 ) {
   const ref = doc(db, "cats", catId);
 
   await updateDoc(ref, {
     roomId,
+    dividerSide: dividerSide ?? null,
     updatedAt: new Date(),
   });
 }

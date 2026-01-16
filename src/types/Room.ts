@@ -5,4 +5,5 @@ export interface Room {
   y: number;
   width: number;
   height: number;
+  divided: boolean;
 }
