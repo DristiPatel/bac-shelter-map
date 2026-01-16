@@ -9,6 +9,7 @@ import { rooms } from "./components/Floorplan";
 import { CatList } from "./components/CatList";
 import { CatDragPreview } from "./components/CatDragPreview";
 import { updateCatRoom } from "./RoomUpdater";
+import { validateRoomAssignments } from "./RoomValidator";
 
 function App() {
   const [cats, setCats] = useState<Cat[]>([]);
@@ -40,6 +41,14 @@ function App() {
     return () => unsub();
   }, []);
 
+  // Heal invalid room assignments
+  useEffect(() => {
+    if (!rooms.length || !cats.length) return;
+
+    validateRoomAssignments(cats, new Set(rooms.map(r => r.id)));
+  }, [rooms, cats]);
+
+
   // Get in custody cats (not adopted yet)
   const inCustodyCats = cats.filter(
     (c) => c.status === "in_custody"
@@ -58,10 +67,13 @@ function App() {
     return shelterCats.filter((cat) => !cat.roomId);
   }, [shelterCats]);
 
-   // Get unassigned foster cats for the list
+  // Get unassigned foster cats for the list
   const unassignedFosterCats = useMemo(() => {
     return fosterCats.filter((cat) => !cat.roomId);
   }, [fosterCats]);
+
+
+
 
   function handleDragStart(event: DragStartEvent) {
     const cat = cats.find((c) => c.id === event.active.id);
@@ -146,7 +158,7 @@ function App() {
         <CatList
           title="🏡 In Foster"
           cats={unassignedFosterCats}
-           draggable
+          draggable
           droppableId="foster-list"
         />
       </div>
