@@ -1,35 +1,50 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection } from "firebase/firestore";
+import { collection, doc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { onSnapshot } from "firebase/firestore";
 import type { Cat } from "./types/Cat";
 import { FloorPlan } from "./components/Floorplan";
 import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
-import { rooms } from "./components/Floorplan";
 import { CatList } from "./components/CatList";
 import { CatDragPreview } from "./components/CatDragPreview";
 import { updateCatRoom } from "./RoomUpdater";
 import { validateRoomAssignments } from "./RoomValidator";
+import type { Room } from "./types/Room";
 
 function App() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [activeCat, setActiveCat] = useState<Cat | null>(null);
 
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [editMode, setEditMode] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
-  /**
-   * Load cats from Firestore (realtime)
-   */
+  // Load cats and rooms from Firestore (realtime)
   useEffect(() => {
-    const unsub = onSnapshot(
+    const unsubRooms = onSnapshot(
+      collection(db, "rooms"),
+      (snapshot) => {
+        const roomsData: Room[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Room, "id">),
+        }));
+        setRooms(roomsData);
+      },
+      (error) => {
+        console.error("Firestore error:", error);
+      }
+    );
+
+    const unsubCats = onSnapshot(
       collection(db, "cats"),
       (snapshot) => {
-        const data: Cat[] = snapshot.docs.map((doc) => ({
+        const catData: Cat[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Omit<Cat, "id">),
         }));
 
-        setCats(data);
+        setCats(catData);
         setLoading(false);
       },
       (error) => {
@@ -38,7 +53,10 @@ function App() {
       }
     );
 
-    return () => unsub();
+    return () => {
+      unsubRooms();
+      unsubCats();
+    };
   }, []);
 
   // Heal invalid room assignments
@@ -47,6 +65,21 @@ function App() {
 
     validateRoomAssignments(cats, new Set(rooms.map(r => r.id)));
   }, [rooms, cats]);
+
+  function handleRoomUpdate(updated: Room) {
+    setRooms((prev) =>
+      prev.map((r) => (r.id === updated.id ? updated : r))
+    );
+  }
+
+  async function handleRoomCommit(room: Room) {
+    const ref = doc(db, "rooms", room.id);
+
+    await updateDoc(ref, {
+      ...room,
+      updatedAt: new Date(),
+    });
+  }
 
 
   // Get in custody cats (not adopted yet)
@@ -71,8 +104,6 @@ function App() {
   const unassignedFosterCats = useMemo(() => {
     return fosterCats.filter((cat) => !cat.roomId);
   }, [fosterCats]);
-
-
 
 
   function handleDragStart(event: DragStartEvent) {
@@ -126,8 +157,8 @@ function App() {
 
   return (
     <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      onDragStart={editMode ? undefined : handleDragStart}
+      onDragEnd={editMode ? undefined : handleDragEnd}
     >
       <div
         style={{
@@ -149,10 +180,58 @@ function App() {
         />
 
         {/* 🗺️ Floorplan */}
-        <section>
-          <h3>Floorplan</h3>
-          <FloorPlan rooms={rooms} cats={inCustodyCats} />
+        <section
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            minWidth: 0,
+          }}
+        >
+          <h3 style={{ marginBottom: "0.5rem" }}>Floorplan</h3>
+
+          {/* SVG container */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              borderRadius: 8,
+              padding: "0.5rem",
+            }}
+          >
+            <FloorPlan
+              rooms={rooms}
+              cats={inCustodyCats}
+              editMode={editMode}
+              onRoomUpdate={handleRoomUpdate}
+              onRoomCommit={handleRoomCommit}
+            />
+          </div>
+
+          {/* Edit mode toggle */}
+          <div
+            style={{
+              marginTop: "0.75rem",
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <button
+              onClick={() => setEditMode((v) => !v)}
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: 6,
+                border: "1px solid #343333",
+                color: "#FFF",
+                background: editMode ? "#420b0b" : "#0b315c",
+                cursor: "pointer",
+              }}
+            >
+              {editMode ? "Exit Edit Mode" : "Edit Floorplan"}
+            </button>
+          </div>
         </section>
+
 
         {/* 🏡 Foster (Read-only) */}
         <CatList
