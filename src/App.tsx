@@ -164,9 +164,11 @@ function App() {
         style={{
           display: "grid",
           gridTemplateColumns: "200px minmax(1000px, 1fr) 200px",
+          width: "100vw",
           height: "100vh",
           gap: "1rem",
           padding: "1rem",
+          boxSizing: "border-box",
           overflow: "hidden"
         }}
       >
