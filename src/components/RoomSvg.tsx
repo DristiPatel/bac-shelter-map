@@ -104,6 +104,26 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   /* ---------------- RENDER ---------------- */
 
+  const containerStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    display: "grid",
+    gridTemplateColumns: room.divided ? "minmax(0, 1fr) minmax(0, 1fr)" : "1fr",
+    columnGap: room.divided ? "32px" : "0px",
+    gridAutoRows: "60px",
+    padding: "8px",
+    boxSizing: "border-box",
+    alignContent: "start",
+  };
+
+  const sideStyle: React.CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap", 
+    gap: "10px",    
+    justifyContent: "flex-start", 
+    alignContent: "flex-start",
+  };
+
   return (
     <g transform={`translate(${room.x}, ${room.y})`}
       onMouseMove={onMouseMove}
@@ -181,9 +201,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
       {/* Cat Droppable Area */}
       <foreignObject
         x={0}
-        y={24}
+        y={16}
         width={room.width}
-        height={room.height - 24}
+        height={room.height - 16}
       >
         <div
           ref={
@@ -191,30 +211,22 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
               ? undefined
               : wholeDrop.setNodeRef
           }
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            gridTemplateColumns: room.divided ? "1fr 1fr" : "1fr",
-            gridAutoRows: "60px",
-            columnGap: room.divided ? "6px" : "0px",
-            padding: 2,
-            boxSizing: "border-box",
-            alignContent: "start",
-          }}
+          style={containerStyle}
         >
           {/* LEFT */}
-          <div ref={room.divided ? leftDrop.setNodeRef : undefined}>
+          <div ref={room.divided ? leftDrop.setNodeRef : undefined}
+            style={sideStyle}>
             {leftCats.map((cat) => (
-              <CatIcon key={cat.id} cat={cat} />
+              <CatIcon key={cat.id} cat={cat} assigned={true} />
             ))}
           </div>
-          
+
           {/* RIGHT */}
           {room.divided && (
-            <div ref={rightDrop.setNodeRef}>
+            <div ref={rightDrop.setNodeRef}
+              style={sideStyle}>
               {rightCats.map((cat) => (
-                <CatIcon key={cat.id} cat={cat} />
+                <CatIcon key={cat.id} cat={cat} assigned={true} />
               ))}
             </div>
           )}
@@ -239,5 +251,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     </g>
   );
 }
+
+
 
 

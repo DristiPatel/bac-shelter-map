@@ -16,6 +16,7 @@ export function CatIcon({ cat, assigned = false }: Props) {
             ref={setNodeRef}
             style={{
                 display: "flex",
+                width: assigned ? "max-content" : "auto",
                 // Toggle between row (horizontal) and column (vertical)
                 flexDirection: assigned ? "column" : "row", 
                 alignItems: "center",
