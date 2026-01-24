@@ -209,6 +209,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         y={16}
         width={room.width}
         height={room.height - 16}
+        style={{ pointerEvents: editMode ? "none" : "auto" }}
       >
         <div
           ref={

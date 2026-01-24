@@ -14,6 +14,7 @@ export function CatIcon({ cat, assigned = false }: Props) {
     return (
         <div
             ref={setNodeRef}
+            data-cat-id={cat.id}
             style={{
                 display: "flex",
                 width: assigned ? "max-content" : "auto",

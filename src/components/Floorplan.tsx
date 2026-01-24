@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Room } from "../types/Room";
 import type { Cat } from "../types/Cat";
 import { RoomSvg } from "./RoomSvg";
@@ -14,189 +14,300 @@ interface Props {
 }
 
 export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }: Props) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [viewRect, setViewRect] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Transform state: translate x, y and uniform scale
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, startTransformX: 0, startTransformY: 0 });
+
+  // 1. Initial fit logic (similar to "meet")
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    if (width === 0 || height === 0) return;
+
+    // Floorplan size
+    const contentW = 1000;
+    const contentH = 600;
+
+    const scale = Math.min(width / contentW, height / contentH) * 0.95; // 0.95 for margin
+    const x = (width - contentW * scale) / 2;
+    const y = (height - contentH * scale) / 2;
+
+    setTransform({ x, y, scale });
+  }, []); // Run once on mount (or could listen to resize if desired)
+
+  // 2. Wheel Zoom logic
+  function handleWheel(e: React.WheelEvent) {
+    if (!containerRef.current) return;
+    e.preventDefault();
+
+    const zoomIntensity = 0.001;
+    const delta = -e.deltaY * zoomIntensity;
+    const newScale = Math.min(Math.max(0.1, transform.scale + delta * transform.scale), 10);
+
+    // Zoom towards pointer
+    const rect = containerRef.current.getBoundingClientRect();
+    const cursorX = e.clientX - rect.left;
+    const cursorY = e.clientY - rect.top;
+
+    // Calculate cursor position in "world" coordinates before zoom
+    const worldX = (cursorX - transform.x) / transform.scale;
+    const worldY = (cursorY - transform.y) / transform.scale;
+
+    // Calculate new translate to keep world point under cursor
+    const newX = cursorX - worldX * newScale;
+    const newY = cursorY - worldY * newScale;
+
+    setTransform({ x: newX, y: newY, scale: newScale });
+  }
+
+  // 3. Pan Logic (Mouse/Touch)
+  function handleMouseDown(e: React.MouseEvent | React.TouchEvent) {
+    // Priority check:
+    // 1. If default prevented (handled by child), ignore.
+    // 2. If clicking a button, ignore.
+    // 3. If clicking a cat (draggable), ignore.
+    if (e.defaultPrevented) return;
+
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("[data-cat-id]")) {
+      return;
+    }
+
+    // Only drag if clicking background (not buttons/rooms)
+    // Actually, dragging rooms is handled by RoomSvg, but panning should happen on background.
+    // We let events bubble?
+    // If e.target is the SVG background (or rect), we pan.
+    // If e.target is a room, RoomSvg handles it and calls stopPropagation?
+    // RoomSvg `onMouseDownMove` does call stopPropagation.
+    
+    // We'll treat this as "start pan"
+    setIsDragging(true);
+
+    let clientX, clientY;
+    if ("touches" in e) {
+       clientX = e.touches[0].clientX;
+       clientY = e.touches[0].clientY;
+    } else {
+       clientX = (e as React.MouseEvent).clientX;
+       clientY = (e as React.MouseEvent).clientY;
+    }
+
+    dragStart.current = {
+      x: clientX,
+      y: clientY,
+      startTransformX: transform.x,
+      startTransformY: transform.y,
+    };
+  }
 
   useEffect(() => {
-    const update = () => {
-      if (!svgRef.current) return;
-      const rect = svgRef.current.getBoundingClientRect();
-      const containerRatio = rect.width / rect.height;
-      const svgRatio = 1000 / 600;
+    if (!isDragging) return;
 
-      let w, h, x, y;
-      if (containerRatio > svgRatio) {
-        h = rect.height;
-        w = h * svgRatio;
-        x = (rect.width - w) / 2;
-        y = 0;
+    function onMove(e: MouseEvent | TouchEvent) {
+      let clientX, clientY;
+      if ("touches" in e) {
+         clientX = e.touches[0].clientX;
+         clientY = e.touches[0].clientY;
       } else {
-        w = rect.width;
-        h = w / svgRatio;
-        x = 0;
-        y = (rect.height - h) / 2;
+         clientX = (e as MouseEvent).clientX;
+         clientY = (e as MouseEvent).clientY;
       }
-      setViewRect({ x, y, width: w, height: h });
+
+      const dx = clientX - dragStart.current.x;
+      const dy = clientY - dragStart.current.y;
+
+      setTransform((prev) => ({
+        ...prev,
+        x: dragStart.current.startTransformX + dx,
+        y: dragStart.current.startTransformY + dy,
+      }));
+    }
+
+    function onUp() {
+      setIsDragging(false);
+    }
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchend", onUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchend", onUp);
     };
-
-    const observer = new ResizeObserver(update);
-    if (svgRef.current) observer.observe(svgRef.current);
-    update();
-
-    return () => observer.disconnect();
-  }, []);
+  }, [isDragging]);
 
   return (
     <div
+      ref={containerRef}
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleMouseDown}
       style={{
         width: "100%",
         height: "100%",
-        position: "relative",
         backgroundColor: "#1e293b",
         borderRadius: 8,
         overflow: "hidden", 
-        boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)"
+        boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
+        cursor: isDragging ? "grabbing" : "grab",
+        touchAction: "none" // Prevent browser scrolling
       }}
     >
-      <svg
-        ref={svgRef}
-        className="floorplan-svg"
-        viewBox="0 0 1000 600"
-        width="100%"
-        height="100%"
-        preserveAspectRatio="xMidYMid meet"
+      <div
         style={{
-          display: "block",
-          overflow: "visible",
-          outline: "none",
+          width: 1000,
+          height: 600,
+          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+          transformOrigin: "0 0",
+          position: "absolute",
+          willChange: "transform",
         }}
       >
-        <defs>
-          <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
-            {/* Row 1 */}
-            <circle cx="2" cy="2" r="1" fill="#334155" />
-            <circle cx="22" cy="2" r="1" fill="#334155" />
-            <circle cx="42" cy="2" r="1" fill="#334155" />
-            <circle cx="62" cy="2" r="1" fill="#334155" />
-            <circle cx="82" cy="2" r="1" fill="#334155" />
-            {/* Row 2 */}
-            <circle cx="2" cy="22" r="1" fill="#334155" />
-            <circle cx="22" cy="22" r="1" fill="#334155" />
-            <circle cx="42" cy="22" r="1" fill="#334155" />
-            <circle cx="62" cy="22" r="1" fill="#334155" />
-            <circle cx="82" cy="22" r="1" fill="#334155" />
-            {/* Row 3 */}
-            <circle cx="2" cy="42" r="1" fill="#334155" />
-            <circle cx="22" cy="42" r="1" fill="#334155" />
-            <circle cx="42" cy="42" r="1" fill="#334155" />
-            <circle cx="62" cy="42" r="1" fill="#334155" />
-            <circle cx="82" cy="42" r="1" fill="#334155" />
-            {/* Row 4 */}
-            <circle cx="2" cy="62" r="1" fill="#334155" />
-            <circle cx="22" cy="62" r="1" fill="#334155" />
-            <circle cx="42" cy="62" r="1" fill="#334155" />
-            <circle cx="62" cy="62" r="1" fill="#334155" />
-            <circle cx="82" cy="62" r="1" fill="#334155" />
-            {/* Row 5 */}
-            <circle cx="2" cy="82" r="1" fill="#334155" />
-            <circle cx="22" cy="82" r="1" fill="#334155" />
-            <circle cx="42" cy="82" r="1" fill="#334155" />
-            <circle cx="62" cy="82" r="1" fill="#334155" />
-            <circle cx="82" cy="82" r="1" fill="#334155" />
-          </pattern>
-        </defs>
-
-        <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
-
-        {rooms.map((room) => (
-          <RoomSvg
-            key={room.id}
-            room={room}
-            cats={cats.filter((c) => c.roomId === room.id)}
-            editMode={editMode}
-            onUpdate={onRoomUpdate}
-            onCommit={onRoomCommit}
-          />
-        ))}
-      </svg>
-
-      {/* HTML Overlay strictly aligned to the SVG's meet-viewport */}
-      {editMode && (
-        <div
+        <svg
+          className="floorplan-svg"
+          viewBox="0 0 1000 600"
+          width="1000"
+          height="600"
           style={{
-            position: "absolute",
-            left: viewRect.x,
-            top: viewRect.y,
-            width: viewRect.width,
-            height: viewRect.height,
-            pointerEvents: "none",
+            display: "block",
+            overflow: "visible",
+            outline: "none",
           }}
         >
+          <defs>
+            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+              {/* Row 1 */}
+              <circle cx="2" cy="2" r="1" fill="#334155" />
+              <circle cx="22" cy="2" r="1" fill="#334155" />
+              <circle cx="42" cy="2" r="1" fill="#334155" />
+              <circle cx="62" cy="2" r="1" fill="#334155" />
+              <circle cx="82" cy="2" r="1" fill="#334155" />
+              {/* Row 2 */}
+              <circle cx="2" cy="22" r="1" fill="#334155" />
+              <circle cx="22" cy="22" r="1" fill="#334155" />
+              <circle cx="42" cy="22" r="1" fill="#334155" />
+              <circle cx="62" cy="22" r="1" fill="#334155" />
+              <circle cx="82" cy="22" r="1" fill="#334155" />
+              {/* Row 3 */}
+              <circle cx="2" cy="42" r="1" fill="#334155" />
+              <circle cx="22" cy="42" r="1" fill="#334155" />
+              <circle cx="42" cy="42" r="1" fill="#334155" />
+              <circle cx="62" cy="42" r="1" fill="#334155" />
+              <circle cx="82" cy="42" r="1" fill="#334155" />
+              {/* Row 4 */}
+              <circle cx="2" cy="62" r="1" fill="#334155" />
+              <circle cx="22" cy="62" r="1" fill="#334155" />
+              <circle cx="42" cy="62" r="1" fill="#334155" />
+              <circle cx="62" cy="62" r="1" fill="#334155" />
+              <circle cx="82" cy="62" r="1" fill="#334155" />
+              {/* Row 5 */}
+              <circle cx="2" cy="82" r="1" fill="#334155" />
+              <circle cx="22" cy="82" r="1" fill="#334155" />
+              <circle cx="42" cy="82" r="1" fill="#334155" />
+              <circle cx="62" cy="82" r="1" fill="#334155" />
+              <circle cx="82" cy="82" r="1" fill="#334155" />
+            </pattern>
+          </defs>
+
+          <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
+
           {rooms.map((room) => (
-            <div
+            <RoomSvg
               key={room.id}
-              style={{
-                position: "absolute",
-                left: `${(room.x / 1000) * 100}%`,
-                top: `${(room.y / 600) * 100}%`,
-                width: `${(room.width / 1000) * 100}%`,
-                height: `${(room.height / 600) * 100}%`,
-              }}
-            >
+              room={room}
+              cats={cats.filter((c) => c.roomId === room.id)}
+              editMode={editMode}
+              onUpdate={onRoomUpdate}
+              onCommit={onRoomCommit}
+            />
+          ))}
+        </svg>
+
+        {/* HTML Overlay matches SVG coordinate system directly (0-1000, 0-600) */}
+        {editMode && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {rooms.map((room) => (
               <div
+                key={room.id}
                 style={{
                   position: "absolute",
-                  top: 4,
-                  right: 4,
-                  pointerEvents: "auto",
+                  left: `${(room.x / 1000) * 100}%`,
+                  top: `${(room.y / 600) * 100}%`,
+                  width: `${(room.width / 1000) * 100}%`,
+                  height: `${(room.height / 600) * 100}%`,
                 }}
               >
-                <Tooltip title={room.divided ? "Remove Divider" : "Add Divider"}>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={() => {
-                      onRoomCommit({
-                        ...room,
-                        divided: !room.divided,
-                      });
-                    }}
-                    sx={{
-                      fontSize: "1em",
-                      padding: "6px 14px",
-                      minWidth: "auto",
-                      lineHeight: 1.1,
-                      backgroundColor: room.divided ? "rgba(46, 125, 50, 0.85)" : "rgba(33, 33, 33, 0.75)",
-                      backdropFilter: "blur(4px)",
-                      color: "#fff",
-                      border: "1px solid rgba(255, 255, 255, 0.2)",
-                      borderRadius: "6px",
-                      boxShadow: room.divided 
-                        ? "0 4px 12px rgba(46, 125, 50, 0.3)" 
-                        : "0 4px 12px rgba(0, 0, 0, 0.2)",
-                      "&:hover": {
-                        backgroundColor: room.divided ? "rgba(46, 125, 50, 1)" : "rgba(33, 33, 33, 0.9)",
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    pointerEvents: "auto",
+                  }}
+                >
+                  <Tooltip title={room.divided ? "Remove Divider" : "Add Divider"}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => {
+                        onRoomCommit({
+                          ...room,
+                          divided: !room.divided,
+                        });
+                      }}
+                      sx={{
+                        fontSize: "1em",
+                        padding: "6px 14px",
+                        minWidth: "auto",
+                        lineHeight: 1.1,
+                        backgroundColor: room.divided ? "rgba(46, 125, 50, 0.85)" : "rgba(33, 33, 33, 0.75)",
+                        backdropFilter: "blur(4px)",
+                        color: "#fff",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                        borderRadius: "6px",
                         boxShadow: room.divided 
-                          ? "0 6px 16px rgba(46, 125, 50, 0.4)" 
-                          : "0 6px 16px rgba(0, 0, 0, 0.3)",
-                        borderColor: "rgba(255, 255, 255, 0.4)",
-                      },
-                      "&:focus": { outline: "none" },
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      fontWeight: 600,
-                      fontFamily: "inherit",
-                      transition: "all 0.2s ease-in-out",
-                    }}
-                  >
-                    {room.divided ? "Divider ON" : "Divider OFF"}
-                  </Button>
-                </Tooltip>
+                          ? "0 4px 12px rgba(46, 125, 50, 0.3)" 
+                          : "0 4px 12px rgba(0, 0, 0, 0.2)",
+                        "&:hover": {
+                          backgroundColor: room.divided ? "rgba(46, 125, 50, 1)" : "rgba(33, 33, 33, 0.9)",
+                          boxShadow: room.divided 
+                            ? "0 6px 16px rgba(46, 125, 50, 0.4)" 
+                            : "0 6px 16px rgba(0, 0, 0, 0.3)",
+                          borderColor: "rgba(255, 255, 255, 0.4)",
+                        },
+                        "&:focus": { outline: "none" },
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        fontWeight: 600,
+                        fontFamily: "inherit",
+                        transition: "all 0.2s ease-in-out",
+                      }}
+                    >
+                      {room.divided ? "Divider ON" : "Divider OFF"}
+                    </Button>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
