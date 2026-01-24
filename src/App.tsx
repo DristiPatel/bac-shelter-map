@@ -4,7 +4,7 @@ import { db } from "./firebase";
 import { onSnapshot } from "firebase/firestore";
 import type { Cat } from "./types/Cat";
 import { FloorPlan } from "./components/Floorplan";
-import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
+import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent, useSensor, useSensors, MouseSensor, TouchSensor } from "@dnd-kit/core";
 import { CatList } from "./components/CatList";
 import { CatDragPreview } from "./components/CatDragPreview";
 import { updateCatRoom } from "./RoomUpdater";
@@ -23,6 +23,20 @@ function App() {
   const [editMode, setEditMode] = useState(false);
 
   const [loading, setLoading] = useState(true);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
 
   // Load cats and rooms from Firestore (realtime)
   useEffect(() => {
@@ -192,6 +206,7 @@ function App() {
 
   return (
     <DndContext
+      sensors={sensors}
       onDragStart={editMode ? undefined : handleDragStart}
       onDragEnd={editMode ? undefined : handleDragEnd}
     >

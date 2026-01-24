@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Room } from "../types/Room";
 import type { Cat } from "../types/Cat";
 import { RoomSvg } from "./RoomSvg";
-import IconButton from "@mui/material/IconButton";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
+import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 
 interface Props {
@@ -153,8 +151,9 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
                 }}
               >
                 <Tooltip title={room.divided ? "Remove Divider" : "Add Divider"}>
-                  <IconButton
+                  <Button
                     size="small"
+                    variant="contained"
                     onClick={() => {
                       onRoomCommit({
                         ...room,
@@ -162,19 +161,35 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
                       });
                     }}
                     sx={{
-                      width: 26,
-                      height: 26,
-                      padding: 0,
-                      backgroundColor: "#fff",
-                      border: "1px solid #999",
+                      fontSize: "1em",
+                      padding: "6px 14px",
+                      minWidth: "auto",
+                      lineHeight: 1.1,
+                      backgroundColor: room.divided ? "rgba(46, 125, 50, 0.85)" : "rgba(33, 33, 33, 0.75)",
+                      backdropFilter: "blur(4px)",
+                      color: "#fff",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      borderRadius: "6px",
+                      boxShadow: room.divided 
+                        ? "0 4px 12px rgba(46, 125, 50, 0.3)" 
+                        : "0 4px 12px rgba(0, 0, 0, 0.2)",
                       "&:hover": {
-                        backgroundColor: "#f0f0f0",
+                        backgroundColor: room.divided ? "rgba(46, 125, 50, 1)" : "rgba(33, 33, 33, 0.9)",
+                        boxShadow: room.divided 
+                          ? "0 6px 16px rgba(46, 125, 50, 0.4)" 
+                          : "0 6px 16px rgba(0, 0, 0, 0.3)",
+                        borderColor: "rgba(255, 255, 255, 0.4)",
                       },
                       "&:focus": { outline: "none" },
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      fontWeight: 600,
+                      fontFamily: "inherit",
+                      transition: "all 0.2s ease-in-out",
                     }}
                   >
-                    {room.divided ? <RemoveIcon sx={{ fontSize: 16 }} /> : <AddIcon sx={{ fontSize: 16 }} />}
-                  </IconButton>
+                    {room.divided ? "Divider ON" : "Divider OFF"}
+                  </Button>
                 </Tooltip>
               </div>
             </div>
