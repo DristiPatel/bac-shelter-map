@@ -52,9 +52,10 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
         width: "100%",
         height: "100%",
         position: "relative",
-        backgroundColor: "#fcfcfc",
+        backgroundColor: "#1e293b",
         borderRadius: 8,
         overflow: "hidden", 
+        boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)"
       }}
     >
       <svg
@@ -73,35 +74,35 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
         <defs>
           <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
             {/* Row 1 */}
-            <circle cx="2" cy="2" r="1" fill="#ccc" />
-            <circle cx="22" cy="2" r="1" fill="#ccc" />
-            <circle cx="42" cy="2" r="1" fill="#ccc" />
-            <circle cx="62" cy="2" r="1" fill="#ccc" />
-            <circle cx="82" cy="2" r="1" fill="#ccc" />
+            <circle cx="2" cy="2" r="1" fill="#334155" />
+            <circle cx="22" cy="2" r="1" fill="#334155" />
+            <circle cx="42" cy="2" r="1" fill="#334155" />
+            <circle cx="62" cy="2" r="1" fill="#334155" />
+            <circle cx="82" cy="2" r="1" fill="#334155" />
             {/* Row 2 */}
-            <circle cx="2" cy="22" r="1" fill="#ccc" />
-            <circle cx="22" cy="22" r="1" fill="#ccc" />
-            <circle cx="42" cy="22" r="1" fill="#ccc" />
-            <circle cx="62" cy="22" r="1" fill="#ccc" />
-            <circle cx="82" cy="22" r="1" fill="#ccc" />
+            <circle cx="2" cy="22" r="1" fill="#334155" />
+            <circle cx="22" cy="22" r="1" fill="#334155" />
+            <circle cx="42" cy="22" r="1" fill="#334155" />
+            <circle cx="62" cy="22" r="1" fill="#334155" />
+            <circle cx="82" cy="22" r="1" fill="#334155" />
             {/* Row 3 */}
-            <circle cx="2" cy="42" r="1" fill="#ccc" />
-            <circle cx="22" cy="42" r="1" fill="#ccc" />
-            <circle cx="42" cy="42" r="1" fill="#ccc" />
-            <circle cx="62" cy="42" r="1" fill="#ccc" />
-            <circle cx="82" cy="42" r="1" fill="#ccc" />
+            <circle cx="2" cy="42" r="1" fill="#334155" />
+            <circle cx="22" cy="42" r="1" fill="#334155" />
+            <circle cx="42" cy="42" r="1" fill="#334155" />
+            <circle cx="62" cy="42" r="1" fill="#334155" />
+            <circle cx="82" cy="42" r="1" fill="#334155" />
             {/* Row 4 */}
-            <circle cx="2" cy="62" r="1" fill="#ccc" />
-            <circle cx="22" cy="62" r="1" fill="#ccc" />
-            <circle cx="42" cy="62" r="1" fill="#ccc" />
-            <circle cx="62" cy="62" r="1" fill="#ccc" />
-            <circle cx="82" cy="62" r="1" fill="#ccc" />
+            <circle cx="2" cy="62" r="1" fill="#334155" />
+            <circle cx="22" cy="62" r="1" fill="#334155" />
+            <circle cx="42" cy="62" r="1" fill="#334155" />
+            <circle cx="62" cy="62" r="1" fill="#334155" />
+            <circle cx="82" cy="62" r="1" fill="#334155" />
             {/* Row 5 */}
-            <circle cx="2" cy="82" r="1" fill="#ccc" />
-            <circle cx="22" cy="82" r="1" fill="#ccc" />
-            <circle cx="42" cy="82" r="1" fill="#ccc" />
-            <circle cx="62" cy="82" r="1" fill="#ccc" />
-            <circle cx="82" cy="82" r="1" fill="#ccc" />
+            <circle cx="2" cy="82" r="1" fill="#334155" />
+            <circle cx="22" cy="82" r="1" fill="#334155" />
+            <circle cx="42" cy="82" r="1" fill="#334155" />
+            <circle cx="62" cy="82" r="1" fill="#334155" />
+            <circle cx="82" cy="82" r="1" fill="#334155" />
           </pattern>
         </defs>
 

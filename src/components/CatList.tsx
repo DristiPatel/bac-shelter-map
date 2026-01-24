@@ -25,15 +25,18 @@ export function CatList({ cats, draggable = false, title, droppableId }: Props) 
                 style={
 
                     {
-                        border: "1px solid #ddd",
+                        border: "1px solid #334155",
                         borderRadius: "8px",
                         overflow: "hidden",
+                        backgroundColor: "#1e293b",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
                     }}><div
                     style={{
                         maxHeight: "80vh",
                         overflowY: "auto",
                         padding: "0.5rem",
-                        background: isOver ? "#638fc2ff" : "#3f3b3bff",
+                        background: isOver ? "rgba(99, 102, 241, 0.2)" : "transparent",
+                        transition: "background-color 0.2s ease",
 
                     }}
                 >

@@ -163,15 +163,15 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
       <rect
         width={room.width}
         height={room.height}
-        rx={8}
-        ry={8}
+        rx={12}
+        ry={12}
         fill={
           isWholeOver || isLeftOver || isRightOver
-            ? "#eef6ff"
-            : "#868282ff"
+            ? "rgba(79, 70, 229, 0.4)" // Indigo 600, 40%
+            : "#334155" // Slate 700
         }
-        stroke="#666"
-        strokeWidth={2}
+        stroke="#64748b" // Slate 500
+        strokeWidth={1}
         cursor={editMode ? "move" : "default"}
         onMouseDown={onMouseDownMove}
       />
@@ -183,9 +183,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
           y1={0}
           x2={room.width / 2}
           y2={room.height}
-          stroke="#444"
-          strokeDasharray="4 3"
-          strokeWidth={1}
+          stroke="#94a3b8"
+          strokeDasharray="2 2"
+          strokeWidth={0.5}
           pointerEvents="none"
         />
       )}
@@ -195,7 +195,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         x={8}
         y={16}
         fontSize={12}
-        fill="#333"
+        fill="#e2e8f0" // Slate 200
         pointerEvents="none"
         fontFamily="monospace"
         fontWeight="bold"
