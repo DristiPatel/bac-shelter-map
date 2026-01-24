@@ -3,6 +3,8 @@ import type { Cat } from "../types/Cat";
 import type { Room } from "../types/Room";
 import { CatIcon } from "./CatIcon";
 import { useRef } from "react";
+import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
 
 interface RoomProps {
   room: Room;
@@ -64,9 +66,8 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
       propsRef.current.onUpdate({
         ...startRoom.current,
-        // Clamp to viewBox 0 0 1000 600
-        x: Math.max(0, Math.min(1000 - startRoom.current.width, nextX)),
-        y: Math.max(0, Math.min(600 - startRoom.current.height, nextY)),
+        x: nextX,
+        y: nextY,
       });
     } else if (activeOperation.current === "resize") {
       const nextW = snap(startRoom.current.width + svgDx);
@@ -74,9 +75,8 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
       propsRef.current.onUpdate({
         ...startRoom.current,
-        // Clamp dimensions based on position
-        width: Math.max(80, Math.min(1000 - startRoom.current.x, nextW)),
-        height: Math.max(80, Math.min(600 - startRoom.current.y, nextH)),
+        width: Math.max(80, nextW),
+        height: Math.max(80, nextH),
       });
     }
   }
@@ -156,15 +156,15 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
   };
 
   return (
-    <g transform={`translate(${Math.max(0, room.x)}, ${Math.max(0, room.y)})`}
+    <g transform={`translate(${room.x}, ${room.y})`}
     >
 
       {/* Room outline */}
       <rect
         width={room.width}
         height={room.height}
-        rx={12}
-        ry={12}
+        rx={2}
+        ry={2}
         fill={
           isWholeOver || isLeftOver || isRightOver
             ? "rgba(79, 70, 229, 0.4)" // Indigo 600, 40%
@@ -193,8 +193,8 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
       {/* Room label */}
       <text
         x={8}
-        y={16}
-        fontSize={12}
+        y={14}
+        fontSize={9}
         fill="#e2e8f0" // Slate 200
         pointerEvents="none"
         fontFamily="monospace"
@@ -206,9 +206,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
       {/* Cat Droppable Area */}
       <foreignObject
         x={0}
-        y={16}
+        y={14}
         width={room.width}
-        height={room.height - 16}
+        height={room.height - 14}
         style={{ pointerEvents: editMode ? "none" : "auto" }}
       >
         <div
@@ -254,6 +254,71 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
           cursor={editMode ? "nwse-resize" : "default"}
           onMouseDown={onMouseDownResize}
         />)}
+
+      {/* Edit Controls (Divider Button) - Rendered inside SVG to respect z-index */}
+      {editMode && (
+        <foreignObject
+          x={0}
+          y={0}
+          width={room.width}
+          height={room.height}
+          style={{ pointerEvents: "none" }} // Let clicks pass through to room drag/resize
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 4,
+              right: 4,
+              pointerEvents: "auto", // Re-enable clicks for the button
+            }}
+          >
+            <Tooltip title={room.divided ? "Remove Divider" : "Add Divider"}>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent drag start
+                  propsRef.current.onCommit({
+                    ...room,
+                    divided: !room.divided,
+                  });
+                }}
+                sx={{
+                  fontSize: "0.6em",
+                  padding: "3px 8px",
+                  minWidth: "auto",
+                  lineHeight: 1.1,
+                  backgroundColor: room.divided ? "rgba(34, 197, 94, 0.9)" : "rgba(71, 85, 105, 0.6)",
+                  backdropFilter: "blur(4px)",
+                  color: room.divided ? "#fff" : "rgba(255, 255, 255, 0.5)",
+                  border: "1px solid",
+                  borderColor: room.divided ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.1)",
+                  borderRadius: "6px",
+                  boxShadow: room.divided 
+                    ? "0 0 12px rgba(34, 197, 94, 0.4)" 
+                    : "none",
+                  "&:hover": {
+                    backgroundColor: room.divided ? "rgba(34, 197, 94, 1)" : "rgba(71, 85, 105, 0.9)",
+                    color: "#fff",
+                    boxShadow: room.divided 
+                      ? "0 0 16px rgba(34, 197, 94, 0.6)" 
+                      : "0 4px 12px rgba(0, 0, 0, 0.3)",
+                    borderColor: "rgba(255, 255, 255, 0.5)",
+                  },
+                  "&:focus": { outline: "none" },
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  fontWeight: 800,
+                  fontFamily: "inherit",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                DIVIDER
+              </Button>
+            </Tooltip>
+          </div>
+        </foreignObject>
+      )}
     </g>
   );
 }

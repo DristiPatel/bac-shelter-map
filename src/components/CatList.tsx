@@ -17,29 +17,45 @@ export function CatList({ cats, draggable = false, title, droppableId }: Props) 
         disabled: !droppableId,
     });
     return (
-        <section>
-            {title && <h3>{title}</h3>}
-
-            <div
-                ref={droppableId ? setNodeRef : undefined}
-                style={
-
-                    {
-                        border: "1px solid #334155",
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                        backgroundColor: "#1e293b",
-                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-                    }}><div
+        <section style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+            {title && (
+                <div
                     style={{
-                        maxHeight: "80vh",
-                        overflowY: "auto",
-                        padding: "0.5rem",
-                        background: isOver ? "rgba(99, 102, 241, 0.2)" : "transparent",
-                        transition: "background-color 0.2s ease",
-
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.75rem",
+                        marginBottom: "0.5rem",
+                        minHeight: "26px", // Matches the height of the edit button in Floorplan
                     }}
                 >
+                    <h3 style={{ margin: 0 }}>{title}</h3>
+                </div>
+            )}
+
+            <div style={{ flex: 1, minHeight: 0, padding: "0.5rem" }}>
+                <div
+                    ref={droppableId ? setNodeRef : undefined}
+                    style={
+                        {
+                            border: "1px solid #334155",
+                            borderRadius: "8px",
+                            overflow: "hidden",
+                            backgroundColor: "#1e293b",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                            height: "100%",
+                            boxSizing: "border-box",
+                            display: "flex",
+                            flexDirection: "column"
+                        }}><div
+                        style={{
+                            flex: 1,
+                            overflowY: "auto",
+                            padding: "0.5rem",
+                            background: isOver ? "rgba(99, 102, 241, 0.2)" : "transparent",
+                            transition: "background-color 0.2s ease",
+
+                        }}
+                    >
                     {cats.map((cat) =>
                         draggable ? (
                             <CatIcon key={cat.id} cat={cat} />
@@ -65,6 +81,7 @@ export function CatList({ cats, draggable = false, title, droppableId }: Props) 
                         )
                     )}
                 </div>
+            </div>
             </div>
         </section>
     );
