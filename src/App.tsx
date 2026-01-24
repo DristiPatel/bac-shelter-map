@@ -192,9 +192,10 @@ function App() {
       onDragEnd={editMode ? undefined : handleDragEnd}
     >
       <div
+        className="main-layout-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "200px minmax(1000px, 1fr) 200px",
+          gridTemplateColumns: "minmax(180px, 200px) 1fr minmax(180px, 200px)",
           width: "100vw",
           height: "100vh",
           gap: "1rem",

@@ -68,3 +68,28 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.main-layout-grid {
+  transition: grid-template-columns 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+  .main-layout-grid {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .main-layout-grid > section {
+    height: auto !important;
+    max-height: 400px;
+  }
+
+  .main-layout-grid > section:nth-child(2) {
+    order: -1; 
+    height: 600px !important;
+    max-height: none !important;
+  }
+}
