@@ -203,29 +203,6 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         {room.label}
       </text>
 
-      {/* Divider toggle */}
-      {editMode && (
-        <foreignObject
-          x={room.width - 90}
-          y={4}
-          width={85}
-          height={24}
-        >
-          <button
-            style={{ fontSize: 8 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onCommit({
-                ...room,
-                divided: !room.divided,
-              });
-            }}
-          >
-            {room.divided ? "Remove Divider" : "Add Divider"}
-          </button>
-        </foreignObject>
-      )}
-
       {/* Cat Droppable Area */}
       <foreignObject
         x={0}
