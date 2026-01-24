@@ -15,17 +15,17 @@ interface RoomProps {
 export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps) {
   /* ---------------- DROPPABLES ---------------- */
 
-  const wholeDrop = useDroppable({
+  const { isOver: isWholeOver, setNodeRef: setWholeRef } = useDroppable({
     id: room.id,
     disabled: room.divided || editMode,
   });
 
-  const leftDrop = useDroppable({
+  const { isOver: isLeftOver, setNodeRef: setLeftRef } = useDroppable({
     id: `${room.id}-left`,
     disabled: !room.divided || editMode,
   });
 
-  const rightDrop = useDroppable({
+  const { isOver: isRightOver, setNodeRef: setRightRef } = useDroppable({
     id: `${room.id}-right`,
     disabled: !room.divided || editMode,
   });
@@ -138,7 +138,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         rx={8}
         ry={8}
         fill={
-          wholeDrop.isOver || leftDrop.isOver || rightDrop.isOver
+          isWholeOver || isLeftOver || isRightOver
             ? "#eef6ff"
             : "#868282ff"
         }
@@ -209,12 +209,12 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
           ref={
             room.divided
               ? undefined
-              : wholeDrop.setNodeRef
+              : setWholeRef
           }
           style={containerStyle}
         >
           {/* LEFT */}
-          <div ref={room.divided ? leftDrop.setNodeRef : undefined}
+          <div ref={room.divided ? setLeftRef : undefined}
             style={sideStyle}>
             {leftCats.map((cat) => (
               <CatIcon key={cat.id} cat={cat} assigned={true} />
@@ -223,7 +223,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
           {/* RIGHT */}
           {room.divided && (
-            <div ref={rightDrop.setNodeRef}
+            <div ref={setRightRef}
               style={sideStyle}>
               {rightCats.map((cat) => (
                 <CatIcon key={cat.id} cat={cat} assigned={true} />
