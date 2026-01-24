@@ -220,6 +220,7 @@ function App() {
             flexDirection: "column",
             height: "100%",
             minWidth: 0,
+            overflow: "hidden", // Prevent section from expanding past grid row
           }}
         >
           <div
@@ -269,6 +270,8 @@ function App() {
               minHeight: 0,
               borderRadius: 8,
               padding: "0.5rem",
+              overflow: "hidden", // Ensure container strictly clips content and respects flex size
+              position: "relative",
             }}
           >
             <FloorPlan

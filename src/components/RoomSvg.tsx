@@ -49,22 +49,34 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
   function onWindowMouseMove(e: MouseEvent) {
     if (!startPoint.current || !startRoom.current || !activeOperation.current) return;
 
-    // TODO: Account for SVG scaling (CTM) to make drag follow mouse 1:1
-    // Currently assuming 1 screen px = 1 SVG unit, which causes sliding if zoomed/scaled.
-    const dx = e.clientX - startPoint.current.x;
-    const dy = e.clientY - startPoint.current.y;
+    // Use the SVG's screen CTM to convert mouse delta (pixels) to SVG units.
+    const svg = document.querySelector(".floorplan-svg") as SVGSVGElement | null;
+    if (!svg) return;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+
+    const svgDx = (e.clientX - startPoint.current.x) / ctm.a;
+    const svgDy = (e.clientY - startPoint.current.y) / ctm.d;
 
     if (activeOperation.current === "drag") {
+      const nextX = snap(startRoom.current.x + svgDx);
+      const nextY = snap(startRoom.current.y + svgDy);
+
       propsRef.current.onUpdate({
         ...startRoom.current,
-        x: snap(startRoom.current.x + dx),
-        y: snap(startRoom.current.y + dy),
+        // Clamp to viewBox 0 0 1000 600
+        x: Math.max(0, Math.min(1000 - startRoom.current.width, nextX)),
+        y: Math.max(0, Math.min(600 - startRoom.current.height, nextY)),
       });
     } else if (activeOperation.current === "resize") {
+      const nextW = snap(startRoom.current.width + svgDx);
+      const nextH = snap(startRoom.current.height + svgDy);
+
       propsRef.current.onUpdate({
         ...startRoom.current,
-        width: Math.max(80, snap(startRoom.current.width + dx)),
-        height: Math.max(80, snap(startRoom.current.height + dy)),
+        // Clamp dimensions based on position
+        width: Math.max(80, Math.min(1000 - startRoom.current.x, nextW)),
+        height: Math.max(80, Math.min(600 - startRoom.current.y, nextH)),
       });
     }
   }
@@ -144,7 +156,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
   };
 
   return (
-    <g transform={`translate(${room.x}, ${room.y})`}
+    <g transform={`translate(${Math.max(0, room.x)}, ${Math.max(0, room.y)})`}
     >
 
       {/* Room outline */}

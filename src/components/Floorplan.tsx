@@ -16,18 +16,24 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
       style={{
         width: "100%",
         height: "100%",
+        display: "flex", // Flex container
+        flexDirection: "column",
         backgroundColor: "#fcfcfc",
         borderRadius: 8,
         overflow: "hidden", 
       }}
     >
       <svg
+        className="floorplan-svg"
         viewBox="0 0 1000 600"
         width="100%"
         height="100%"
         preserveAspectRatio="xMidYMid meet"
         style={{
           display: "block",
+          flex: 1,      // Fill flex container
+          minHeight: 0, // Allow shrinking
+          maxHeight: "100%", // Clamp to container height
           overflow: "visible",
           outline: "none",
         }}
