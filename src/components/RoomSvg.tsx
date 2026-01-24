@@ -2,7 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import type { Cat } from "../types/Cat";
 import type { Room } from "../types/Room";
 import { CatIcon } from "./CatIcon";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 interface RoomProps {
   room: Room;
@@ -32,46 +32,31 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   /* ---------------- DRAG / RESIZE STATE ---------------- */
 
-  const [dragging, setDragging] = useState(false);
-  const [resizing, setResizing] = useState(false);
-
+  const activeOperation = useRef<"drag" | "resize" | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
   const startRoom = useRef<Room | null>(null);
 
-  function onMouseDownMove(e: React.MouseEvent<SVGGElement>) {
-    if (!editMode) return;
+  // Refs to access latest values inside window event listeners
+  const latestRoomRef = useRef(room);
+  latestRoomRef.current = room;
 
-    e.stopPropagation();
-    setDragging(true);
-    startPoint.current = { x: e.clientX, y: e.clientY };
-    startRoom.current = room;
-  }
+  const propsRef = useRef({ onUpdate, onCommit });
+  propsRef.current = { onUpdate, onCommit };
 
-  function onMouseDownResize(e: React.MouseEvent<SVGRectElement>) {
-    if (!editMode) return;
-
-    e.stopPropagation();
-    setResizing(true);
-    startPoint.current = { x: e.clientX, y: e.clientY };
-    startRoom.current = room;
-  }
-
-  function onMouseMove(e: React.MouseEvent<SVGGElement>) {
-    if (!startPoint.current || !startRoom.current) return;
+  function onWindowMouseMove(e: MouseEvent) {
+    if (!startPoint.current || !startRoom.current || !activeOperation.current) return;
 
     const dx = e.clientX - startPoint.current.x;
     const dy = e.clientY - startPoint.current.y;
 
-    if (dragging) {
-      onUpdate({
+    if (activeOperation.current === "drag") {
+      propsRef.current.onUpdate({
         ...startRoom.current,
         x: startRoom.current.x + dx,
         y: startRoom.current.y + dy,
       });
-    }
-
-    if (resizing) {
-      onUpdate({
+    } else if (activeOperation.current === "resize") {
+      propsRef.current.onUpdate({
         ...startRoom.current,
         width: Math.max(80, startRoom.current.width + dx),
         height: Math.max(80, startRoom.current.height + dy),
@@ -79,17 +64,46 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     }
   }
 
-  function onMouseUp() {
-    console.log("Mouse up");
-    if (startRoom.current && (dragging || resizing)) {
-      console.log("Committing room", startRoom.current, "to", room);
-      onCommit(room);
+  function onWindowMouseUp() {
+    if (activeOperation.current && startRoom.current) {
+      console.log("Committing room", latestRoomRef.current);
+      propsRef.current.onCommit(latestRoomRef.current);
     }
 
-    setDragging(false);
-    setResizing(false);
+    activeOperation.current = null;
     startPoint.current = null;
     startRoom.current = null;
+
+    window.removeEventListener("mousemove", onWindowMouseMove);
+    window.removeEventListener("mouseup", onWindowMouseUp);
+  }
+
+  function onMouseDownMove(e: React.MouseEvent<SVGGElement>) {
+    if (!editMode) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    
+    activeOperation.current = "drag";
+    startPoint.current = { x: e.clientX, y: e.clientY };
+    startRoom.current = room;
+
+    window.addEventListener("mousemove", onWindowMouseMove);
+    window.addEventListener("mouseup", onWindowMouseUp);
+  }
+
+  function onMouseDownResize(e: React.MouseEvent<SVGRectElement>) {
+    if (!editMode) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    activeOperation.current = "resize";
+    startPoint.current = { x: e.clientX, y: e.clientY };
+    startRoom.current = room;
+
+    window.addEventListener("mousemove", onWindowMouseMove);
+    window.addEventListener("mouseup", onWindowMouseUp);
   }
 
   /* ---------------- CAT GROUPING ---------------- */
@@ -126,9 +140,6 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   return (
     <g transform={`translate(${room.x}, ${room.y})`}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
     >
 
       {/* Room outline */}
