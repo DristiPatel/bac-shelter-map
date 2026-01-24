@@ -43,23 +43,28 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
   const propsRef = useRef({ onUpdate, onCommit });
   propsRef.current = { onUpdate, onCommit };
 
+  const GRID_SIZE = 20;
+  const snap = (val: number) => Math.round(val / GRID_SIZE) * GRID_SIZE;
+
   function onWindowMouseMove(e: MouseEvent) {
     if (!startPoint.current || !startRoom.current || !activeOperation.current) return;
 
+    // TODO: Account for SVG scaling (CTM) to make drag follow mouse 1:1
+    // Currently assuming 1 screen px = 1 SVG unit, which causes sliding if zoomed/scaled.
     const dx = e.clientX - startPoint.current.x;
     const dy = e.clientY - startPoint.current.y;
 
     if (activeOperation.current === "drag") {
       propsRef.current.onUpdate({
         ...startRoom.current,
-        x: startRoom.current.x + dx,
-        y: startRoom.current.y + dy,
+        x: snap(startRoom.current.x + dx),
+        y: snap(startRoom.current.y + dy),
       });
     } else if (activeOperation.current === "resize") {
       propsRef.current.onUpdate({
         ...startRoom.current,
-        width: Math.max(80, startRoom.current.width + dx),
-        height: Math.max(80, startRoom.current.height + dy),
+        width: Math.max(80, snap(startRoom.current.width + dx)),
+        height: Math.max(80, snap(startRoom.current.height + dy)),
       });
     }
   }
