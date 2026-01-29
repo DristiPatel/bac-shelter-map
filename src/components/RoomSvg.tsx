@@ -34,7 +34,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   /* ---------------- DRAG / RESIZE STATE ---------------- */
 
-  const activeOperation = useRef<"drag" | "resize" | null>(null);
+  const activeOperation = useRef<"drag" | null>(null);
   const startPoint = useRef<{ x: number; y: number } | null>(null);
   const startRoom = useRef<Room | null>(null);
 
@@ -69,15 +69,6 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         x: nextX,
         y: nextY,
       });
-    } else if (activeOperation.current === "resize") {
-      const nextW = snap(startRoom.current.width + svgDx);
-      const nextH = snap(startRoom.current.height + svgDy);
-
-      propsRef.current.onUpdate({
-        ...startRoom.current,
-        width: Math.max(80, nextW),
-        height: Math.max(80, nextH),
-      });
     }
   }
 
@@ -100,7 +91,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
     e.preventDefault();
     e.stopPropagation();
-    
+
     activeOperation.current = "drag";
     startPoint.current = { x: e.clientX, y: e.clientY };
     startRoom.current = room;
@@ -109,19 +100,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     window.addEventListener("mouseup", onWindowMouseUp);
   }
 
-  function onMouseDownResize(e: React.MouseEvent<SVGRectElement>) {
-    if (!editMode) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-
-    activeOperation.current = "resize";
-    startPoint.current = { x: e.clientX, y: e.clientY };
-    startRoom.current = room;
-
-    window.addEventListener("mousemove", onWindowMouseMove);
-    window.addEventListener("mouseup", onWindowMouseUp);
-  }
 
   /* ---------------- CAT GROUPING ---------------- */
 
@@ -149,9 +128,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   const sideStyle: React.CSSProperties = {
     display: "flex",
-    flexWrap: "wrap", 
-    gap: "10px",    
-    justifyContent: "flex-start", 
+    flexWrap: "wrap",
+    gap: "10px",
+    justifyContent: "flex-start",
     alignContent: "flex-start",
   };
 
@@ -239,21 +218,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         </div>
       </foreignObject>
 
-      {/* Resize handle */}
-      {editMode && (
-        <rect
-          x={room.width - 10}
-          y={room.height - 10}
-          width={10}
-          height={10}
-          fill="#ccc"
-          stroke="#999"
-          strokeWidth={1}
-          rx={2}
-          ry={2}
-          cursor={editMode ? "nwse-resize" : "default"}
-          onMouseDown={onMouseDownResize}
-        />)}
+
 
       {/* Edit Controls (Divider Button) - Rendered inside SVG to respect z-index */}
       {editMode && (
@@ -294,14 +259,14 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
                   border: "1px solid",
                   borderColor: room.divided ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.1)",
                   borderRadius: "6px",
-                  boxShadow: room.divided 
-                    ? "0 0 12px rgba(34, 197, 94, 0.4)" 
+                  boxShadow: room.divided
+                    ? "0 0 12px rgba(34, 197, 94, 0.4)"
                     : "none",
                   "&:hover": {
                     backgroundColor: room.divided ? "rgba(34, 197, 94, 1)" : "rgba(71, 85, 105, 0.9)",
                     color: "#fff",
-                    boxShadow: room.divided 
-                      ? "0 0 16px rgba(34, 197, 94, 0.6)" 
+                    boxShadow: room.divided
+                      ? "0 0 16px rgba(34, 197, 94, 0.6)"
                       : "0 4px 12px rgba(0, 0, 0, 0.3)",
                     borderColor: "rgba(255, 255, 255, 0.5)",
                   },
