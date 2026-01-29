@@ -165,12 +165,30 @@ function App() {
     if (newRoomId) {
       const targetRoom = rooms.find((r) => r.id === newRoomId);
       if (targetRoom && targetRoom.maxCats) {
-        const currentCatsInRoom = cats.filter(
-          (c) => c.roomId === newRoomId && c.id !== active.id
-        );
-        if (currentCatsInRoom.length >= targetRoom.maxCats) {
-          setActiveCat(null);
-          return; // Cancel drop
+        if (targetRoom.divided) {
+          // Validation for divided rooms (per-side capacity)
+          const limit = targetRoom.maxCats;
+
+          const currentCatsInSide = cats.filter(
+            (c) =>
+              c.roomId === newRoomId &&
+              c.dividerSide === newDividerSide &&
+              c.id !== active.id
+          );
+
+          if (currentCatsInSide.length >= limit) {
+            setActiveCat(null);
+            return; // Cancel drop
+          }
+        } else {
+          // Validation for standard rooms
+          const currentCatsInRoom = cats.filter(
+            (c) => c.roomId === newRoomId && c.id !== active.id
+          );
+          if (currentCatsInRoom.length >= targetRoom.maxCats) {
+            setActiveCat(null);
+            return; // Cancel drop
+          }
         }
       }
     }

@@ -112,6 +112,15 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
     (c) => room.divided && c.dividerSide === "right"
   );
 
+  /* ---------------- CAPACITY LOGIC ---------------- */
+  let leftMax = room.maxCats;
+  let rightMax = 0;
+
+  if (room.divided && room.maxCats) {
+    leftMax = room.maxCats;
+    rightMax = room.maxCats;
+  }
+
   /* ---------------- RENDER ---------------- */
 
   const containerStyle: React.CSSProperties = {
@@ -180,7 +189,11 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         fontWeight="bold"
       >
         {room.label}
-        {room.maxCats ? ` (${leftCats.length + rightCats.length}/${room.maxCats} cats)` : ""}
+        {room.maxCats
+          ? room.divided
+            ? ` (L:${leftCats.length}/${leftMax} R:${rightCats.length}/${rightMax})`
+            : ` (${leftCats.length}/${room.maxCats})`
+          : ""}
       </text>
 
       {/* Cat Droppable Area */}
@@ -205,6 +218,19 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
             {leftCats.map((cat) => (
               <CatIcon key={cat.id} cat={cat} assigned={true} />
             ))}
+            {/* Empty Slots (Left Side) */}
+            {room.maxCats && Array.from({ length: Math.max(0, (room.divided ? leftMax : room.maxCats) - leftCats.length) }).map((_, i) => (
+              <div
+                key={`empty-left-${i}`}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  border: "2px dashed rgba(255, 255, 255, 0.2)",
+                  boxSizing: "border-box",
+                }}
+              />
+            ))}
           </div>
 
           {/* RIGHT */}
@@ -213,6 +239,19 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
               style={sideStyle}>
               {rightCats.map((cat) => (
                 <CatIcon key={cat.id} cat={cat} assigned={true} />
+              ))}
+              {/* Empty Slots (Right Side) */}
+              {room.maxCats && Array.from({ length: Math.max(0, rightMax - rightCats.length) }).map((_, i) => (
+                <div
+                  key={`empty-right-${i}`}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    border: "2px dashed rgba(255, 255, 255, 0.2)",
+                    boxSizing: "border-box",
+                  }}
+                />
               ))}
             </div>
           )}
