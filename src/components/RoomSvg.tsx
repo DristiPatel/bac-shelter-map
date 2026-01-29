@@ -180,7 +180,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         fontWeight="bold"
       >
         {room.label}
-        {room.maxCats ? ` (Size: ${room.maxCats})` : ""}
+        {room.maxCats ? ` (${leftCats.length + rightCats.length}/${room.maxCats} cats)` : ""}
       </text>
 
       {/* Cat Droppable Area */}
