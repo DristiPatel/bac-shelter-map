@@ -123,24 +123,39 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
 
   /* ---------------- RENDER ---------------- */
 
+  const PADDING = 4;
+  const GAP_DIVIDED = 16;
+  const ITEM_WIDTH = 50;
+  const ITEM_GAP = 4;
+
+  const availableWidth = room.divided
+    ? (room.width - (PADDING * 2) - GAP_DIVIDED) / 2
+    : (room.width - (PADDING * 2));
+
+  const cols = Math.max(1, Math.floor(availableWidth / (ITEM_WIDTH + ITEM_GAP)));
+
   const containerStyle: React.CSSProperties = {
     width: "100%",
     height: "100%",
     display: "grid",
     gridTemplateColumns: room.divided ? "minmax(0, 1fr) minmax(0, 1fr)" : "1fr",
-    columnGap: room.divided ? "32px" : "0px",
-    gridAutoRows: "60px",
-    padding: "8px",
+    columnGap: room.divided ? `${GAP_DIVIDED}px` : "0px",
+    gridTemplateRows: "1fr",
+    padding: `${PADDING}px`,
     boxSizing: "border-box",
-    alignContent: "start",
+    alignItems: "start",
   };
 
   const sideStyle: React.CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    justifyContent: "flex-start",
-    alignContent: "flex-start",
+    display: "grid",
+    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+    columnGap: `${ITEM_GAP}px`,
+    rowGap: "8px",
+    justifyItems: "center",
+    alignContent: "start",
+    width: "100%",
+    gridAutoRows: "40px",
+    alignItems: "start",
   };
 
   return (
@@ -199,9 +214,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
       {/* Cat Droppable Area */}
       <foreignObject
         x={0}
-        y={14}
+        y={30}
         width={room.width}
-        height={room.height - 14}
+        height={room.height - 30}
         style={{ pointerEvents: editMode ? "none" : "auto" }}
       >
         <div

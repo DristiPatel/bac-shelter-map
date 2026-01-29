@@ -44,16 +44,16 @@ export function CatIcon({ cat, assigned = false }: Props) {
                 onMouseLeave={handleMouseLeave}
                 style={{
                     display: "flex",
-                    width: assigned ? "max-content" : "auto",
+                    width: assigned ? "50px" : "auto",
                     // Toggle between row (horizontal) and column (vertical)
-                    flexDirection: assigned ? "column" : "row", 
+                    flexDirection: assigned ? "column" : "row",
                     alignItems: "center",
                     justifyContent: "left",
                     gap: assigned ? "0.0rem" : "0.5rem",
                     padding: assigned ? "0.0rem" : "0.2rem",
                     cursor: "grab",
                     // Ensure text centers when stacked vertically
-                    textAlign: "center", 
+                    textAlign: "center",
                     opacity: isDragging ? 0.5 : 1,
                 }}
                 {...listeners}
@@ -69,14 +69,18 @@ export function CatIcon({ cat, assigned = false }: Props) {
                         objectFit: "cover",
                     }}
                 />
-                
+
                 <div
                     style={{
-                        whiteSpace: "nowrap",
+                        whiteSpace: assigned ? "normal" : "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
+                        display: assigned ? "-webkit-box" : "block",
+                        WebkitLineClamp: assigned ? 2 : undefined,
+                        WebkitBoxOrient: assigned ? "vertical" : undefined,
+                        lineHeight: assigned ? "1.1" : "inherit",
                         fontSize: assigned ? "0.55rem" : "1rem", // Optional: smaller text when assigned
-                        maxWidth: assigned ? "50px" : "none",    // Keeps the column layout neat
+                        maxWidth: assigned ? "100%" : "none",    // Used to be 50px, but parent is now 50px
                         color: "#FFF"
                     }}
                     title={cat.name}
