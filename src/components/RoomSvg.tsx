@@ -113,13 +113,9 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
   );
 
   /* ---------------- CAPACITY LOGIC ---------------- */
-  let leftMax = room.maxCats;
-  let rightMax = 0;
-
-  if (room.divided && room.maxCats) {
-    leftMax = room.maxCats;
-    rightMax = room.maxCats;
-  }
+  const totalCap = room.maxCats ?? 0;
+  const leftMax = totalCap;
+  const rightMax = room.divided ? totalCap : 0;
 
   /* ---------------- RENDER ---------------- */
 
@@ -234,7 +230,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
               <CatIcon key={cat.id} cat={cat} assigned={true} />
             ))}
             {/* Empty Slots (Left Side) */}
-            {room.maxCats && Array.from({ length: Math.max(0, (room.divided ? leftMax : room.maxCats) - leftCats.length) }).map((_, i) => (
+            {room.maxCats && Array.from({ length: Math.max(0, leftMax - leftCats.length) }).map((_, i) => (
               <div
                 key={`empty-left-${i}`}
                 style={{
