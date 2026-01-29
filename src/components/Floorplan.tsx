@@ -90,6 +90,28 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
 
 
 
+  // 2. Button Zoom logic
+  function handleZoom(factor: number) {
+    if (!containerRef.current) return;
+    const { width, height } = containerRef.current.getBoundingClientRect();
+
+    // Center of container
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const newScale = Math.min(Math.max(0.1, transform.scale * factor), 10);
+
+    // Calculate cursor position in "world" coordinates before zoom
+    const worldX = (centerX - transform.x) / transform.scale;
+    const worldY = (centerY - transform.y) / transform.scale;
+
+    // Calculate new translate to keep world point under cursor
+    const newX = centerX - worldX * newScale;
+    const newY = centerY - worldY * newScale;
+
+    setTransform({ x: newX, y: newY, scale: newScale });
+  }
+
   // 3. Pan Logic (Mouse/Touch)
   function handleMouseDown(e: React.MouseEvent | React.TouchEvent) {
     // Priority check:
@@ -188,7 +210,7 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
         position: "relative",
       }}
     >
-      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
+      <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10, display: "flex", gap: "0.5rem" }}>
         <Button
           variant="contained"
           size="small"
@@ -201,6 +223,38 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
           }}
         >
           Reset View
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => handleZoom(1.2)}
+          sx={{
+            minWidth: "40px",
+            backgroundColor: "rgba(33, 33, 33, 0.8)",
+            backdropFilter: "blur(4px)",
+            color: "#fff",
+            "&:hover": { backgroundColor: "rgba(33, 33, 33, 1)" },
+            fontSize: "1.6rem",
+            padding: "0"
+          }}
+        >
+          +
+        </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => handleZoom(0.8)}
+          sx={{
+            minWidth: "40px",
+            backgroundColor: "rgba(33, 33, 33, 0.8)",
+            backdropFilter: "blur(4px)",
+            color: "#fff",
+            "&:hover": { backgroundColor: "rgba(33, 33, 33, 1)" },
+            fontSize: "1.6rem",
+            padding: "0"
+          }}
+        >
+          -
         </Button>
       </div>
 
