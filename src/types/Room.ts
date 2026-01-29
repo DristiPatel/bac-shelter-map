@@ -6,4 +6,5 @@ export interface Room {
   width: number;
   height: number;
   divided: boolean;
+  maxCats?: number;
 }

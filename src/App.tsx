@@ -129,75 +129,89 @@ function App() {
     if (cat) setActiveCat(cat);
   }
 
- async function handleDragEnd(event: DragEndEvent) {
-  const { active, over } = event;
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
 
-  setActiveCat(null);
-  if (!over) return;
+    setActiveCat(null);
+    if (!over) return;
 
-  let newRoomId: string | null = null;
-  let newDividerSide: "left" | "right" | undefined = undefined;
+    let newRoomId: string | null = null;
+    let newDividerSide: "left" | "right" | undefined = undefined;
 
-  const overId = over.id as string;
+    const overId = over.id as string;
 
-  // Dropped back into lists
-  if (overId === "shelter-list" || overId === "foster-list") {
-    newRoomId = null;
-    newDividerSide = undefined;
-  }
+    // Dropped back into lists
+    if (overId === "shelter-list" || overId === "foster-list") {
+      newRoomId = null;
+      newDividerSide = undefined;
+    }
 
-  // Dropped into divided room side
-  else if (overId.endsWith("-left")) {
-    newRoomId = overId.replace("-left", "");
-    newDividerSide = "left";
-  } else if (overId.endsWith("-right")) {
-    newRoomId = overId.replace("-right", "");
-    newDividerSide = "right";
-  }
+    // Dropped into divided room side
+    else if (overId.endsWith("-left")) {
+      newRoomId = overId.replace("-left", "");
+      newDividerSide = "left";
+    } else if (overId.endsWith("-right")) {
+      newRoomId = overId.replace("-right", "");
+      newDividerSide = "right";
+    }
 
-  // Dropped into undivided room
-  else {
-    newRoomId = overId;
-    newDividerSide = undefined;
-  }
+    // Dropped into undivided room
+    else {
+      newRoomId = overId;
+      newDividerSide = undefined;
+    }
 
-  // Optimistic UI update
-  setCats((prev) =>
-    prev.map((cat) =>
-      cat.id === active.id
-        ? {
-            ...cat,
-            roomId: newRoomId,
-            dividerSide: newDividerSide,
-          }
-        : cat
-    )
-  );
+    // Check maxCats limit
+    if (newRoomId) {
+      const targetRoom = rooms.find((r) => r.id === newRoomId);
+      if (targetRoom && targetRoom.maxCats) {
+        const currentCatsInRoom = cats.filter(
+          (c) => c.roomId === newRoomId && c.id !== active.id
+        );
+        if (currentCatsInRoom.length >= targetRoom.maxCats) {
+          setActiveCat(null);
+          return; // Cancel drop
+        }
+      }
+    }
 
-  try {
-    await updateCatRoom(
-      active.id as string,
-      newRoomId,
-      newDividerSide,
-    );
-  } catch (error) {
-    console.error("Failed to update cat room", error);
-
-    // Rollback on failure
+    // Optimistic UI update
     setCats((prev) =>
       prev.map((cat) =>
         cat.id === active.id
           ? {
+            ...cat,
+            roomId: newRoomId,
+            dividerSide: newDividerSide,
+          }
+          : cat
+      )
+    );
+
+    try {
+      await updateCatRoom(
+        active.id as string,
+        newRoomId,
+        newDividerSide,
+      );
+    } catch (error) {
+      console.error("Failed to update cat room", error);
+
+      // Rollback on failure
+      setCats((prev) =>
+        prev.map((cat) =>
+          cat.id === active.id
+            ? {
               ...cat,
               roomId: null,
               roomSide: undefined,
             }
-          : cat
-      )
-    );
-  }
+            : cat
+        )
+      );
+    }
 
-}
+  }
 
 
   if (loading) {

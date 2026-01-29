@@ -180,6 +180,7 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
         fontWeight="bold"
       >
         {room.label}
+        {room.maxCats ? ` (Size: ${room.maxCats})` : ""}
       </text>
 
       {/* Cat Droppable Area */}
@@ -282,9 +283,46 @@ export function RoomSvg({ room, editMode, cats, onUpdate, onCommit }: RoomProps)
               </Button>
             </Tooltip>
           </div>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 4,
+              left: 4,
+              pointerEvents: "auto",
+            }}
+          >
+            <input
+              type="number"
+              placeholder="Max"
+              defaultValue={room.maxCats}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value);
+                propsRef.current.onCommit({
+                  ...room,
+                  maxCats: isNaN(val) ? undefined : val,
+                });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.currentTarget.blur();
+                }
+              }}
+              style={{
+                width: "50px",
+                fontSize: "10px",
+                padding: "2px",
+                borderRadius: "4px",
+                border: "1px solid rgba(255,255,255,0.3)",
+                background: "rgba(0,0,0,0.5)",
+                color: "white",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </foreignObject>
-      )}
-    </g>
+      )
+      }
+    </g >
   );
 }
 
