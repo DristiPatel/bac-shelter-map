@@ -14,7 +14,7 @@ interface Props {
 
 export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Transform state: translate x, y and uniform scale
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isDragging, setIsDragging] = useState(false);
@@ -51,7 +51,7 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
     if (contentW <= 0 || contentH <= 0) return;
 
     const scale = Math.min(containerW / contentW, containerH / contentH) * 0.95;
-    
+
     // Center logic
     const contentCenterX = minX + contentW / 2;
     const contentCenterY = minY + contentH / 2;
@@ -72,46 +72,23 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
     if (rooms.length > 0) {
       resetView();
     } else {
-       if (!containerRef.current) return;
-       const { width, height } = containerRef.current.getBoundingClientRect();
-       if (width === 0 || height === 0) return;
-       const contentW = 1000;
-       const contentH = 600;
-       const scale = Math.min(width / contentW, height / contentH) * 0.95; 
-       const x = (width - contentW * scale) / 2;
-       const y = (height - contentH * scale) / 2;
-       setTransform({ x, y, scale });
+      if (!containerRef.current) return;
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      const contentW = 1000;
+      const contentH = 600;
+      const scale = Math.min(width / contentW, height / contentH) * 0.95;
+      const x = (width - contentW * scale) / 2;
+      const y = (height - contentH * scale) / 2;
+      setTransform({ x, y, scale });
     }
     // We only run this on mount. If rooms load later, we might want to auto-fit?
     // User asked for a button. Let's stick to the button being the primary way to re-fit.
     // But updating the initial effect to be smart is good.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, []);
 
-  // 2. Wheel Zoom logic
-  function handleWheel(e: React.WheelEvent) {
-    if (!containerRef.current) return;
-    e.preventDefault();
 
-    const zoomIntensity = 0.001;
-    const delta = -e.deltaY * zoomIntensity;
-    const newScale = Math.min(Math.max(0.1, transform.scale + delta * transform.scale), 10);
-
-    // Zoom towards pointer
-    const rect = containerRef.current.getBoundingClientRect();
-    const cursorX = e.clientX - rect.left;
-    const cursorY = e.clientY - rect.top;
-
-    // Calculate cursor position in "world" coordinates before zoom
-    const worldX = (cursorX - transform.x) / transform.scale;
-    const worldY = (cursorY - transform.y) / transform.scale;
-
-    // Calculate new translate to keep world point under cursor
-    const newX = cursorX - worldX * newScale;
-    const newY = cursorY - worldY * newScale;
-
-    setTransform({ x: newX, y: newY, scale: newScale });
-  }
 
   // 3. Pan Logic (Mouse/Touch)
   function handleMouseDown(e: React.MouseEvent | React.TouchEvent) {
@@ -132,17 +109,17 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
     // If e.target is the SVG background (or rect), we pan.
     // If e.target is a room, RoomSvg handles it and calls stopPropagation?
     // RoomSvg `onMouseDownMove` does call stopPropagation.
-    
+
     // We'll treat this as "start pan"
     setIsDragging(true);
 
     let clientX, clientY;
     if ("touches" in e) {
-       clientX = e.touches[0].clientX;
-       clientY = e.touches[0].clientY;
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
     } else {
-       clientX = (e as React.MouseEvent).clientX;
-       clientY = (e as React.MouseEvent).clientY;
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
     }
 
     dragStart.current = {
@@ -159,11 +136,11 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
     function onMove(e: MouseEvent | TouchEvent) {
       let clientX, clientY;
       if ("touches" in e) {
-         clientX = e.touches[0].clientX;
-         clientY = e.touches[0].clientY;
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
       } else {
-         clientX = (e as MouseEvent).clientX;
-         clientY = (e as MouseEvent).clientY;
+        clientX = (e as MouseEvent).clientX;
+        clientY = (e as MouseEvent).clientY;
       }
 
       const dx = clientX - dragStart.current.x;
@@ -196,7 +173,7 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
   return (
     <div
       ref={containerRef}
-      onWheel={handleWheel}
+
       onMouseDown={handleMouseDown}
       onTouchStart={handleMouseDown}
       style={{
@@ -204,7 +181,7 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
         height: "100%",
         backgroundColor: "#1e293b",
         borderRadius: 8,
-        overflow: "hidden", 
+        overflow: "hidden",
         boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)",
         cursor: isDragging ? "grabbing" : "grab",
         touchAction: "none", // Prevent browser scrolling
@@ -212,11 +189,11 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
       }}
     >
       <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           size="small"
           onClick={resetView}
-          sx={{ 
+          sx={{
             backgroundColor: "rgba(33, 33, 33, 0.8)",
             backdropFilter: "blur(4px)",
             color: "#fff",
@@ -248,51 +225,51 @@ export function FloorPlan({ cats, rooms, editMode, onRoomUpdate, onRoomCommit }:
             outline: "none",
           }}
         >
-                                          <defs>
-                                            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
-                                              {/* Row 1 */}
-                                              <circle cx="2" cy="2" r="1" fill="#334155" />
-                                              <circle cx="22" cy="2" r="1" fill="#334155" />
-                                              <circle cx="42" cy="2" r="1" fill="#334155" />
-                                              <circle cx="62" cy="2" r="1" fill="#334155" />
-                                              <circle cx="82" cy="2" r="1" fill="#334155" />
-                                              {/* Row 2 */}
-                                              <circle cx="2" cy="22" r="1" fill="#334155" />
-                                              <circle cx="22" cy="22" r="1" fill="#334155" />
-                                              <circle cx="42" cy="22" r="1" fill="#334155" />
-                                              <circle cx="62" cy="22" r="1" fill="#334155" />
-                                              <circle cx="82" cy="22" r="1" fill="#334155" />
-                                              {/* Row 3 */}
-                                              <circle cx="2" cy="42" r="1" fill="#334155" />
-                                              <circle cx="22" cy="42" r="1" fill="#334155" />
-                                              <circle cx="42" cy="42" r="1" fill="#334155" />
-                                              <circle cx="62" cy="42" r="1" fill="#334155" />
-                                              <circle cx="82" cy="42" r="1" fill="#334155" />
-                                              {/* Row 4 */}
-                                              <circle cx="2" cy="62" r="1" fill="#334155" />
-                                              <circle cx="22" cy="62" r="1" fill="#334155" />
-                                              <circle cx="42" cy="62" r="1" fill="#334155" />
-                                              <circle cx="62" cy="62" r="1" fill="#334155" />
-                                              <circle cx="82" cy="62" r="1" fill="#334155" />
-                                              {/* Row 5 */}
-                                              <circle cx="2" cy="82" r="1" fill="#334155" />
-                                              <circle cx="22" cy="82" r="1" fill="#334155" />
-                                              <circle cx="42" cy="82" r="1" fill="#334155" />
-                                              <circle cx="62" cy="82" r="1" fill="#334155" />
-                                              <circle cx="82" cy="82" r="1" fill="#334155" />
-                                            </pattern>
-                                          </defs>
-                                  
-                                          <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
-                                  
-                                          {rooms.map((room) => (            <RoomSvg
-              key={room.id}
-              room={room}
-              cats={cats.filter((c) => c.roomId === room.id)}
-              editMode={editMode}
-              onUpdate={onRoomUpdate}
-              onCommit={onRoomCommit}
-            />
+          <defs>
+            <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+              {/* Row 1 */}
+              <circle cx="2" cy="2" r="1" fill="#334155" />
+              <circle cx="22" cy="2" r="1" fill="#334155" />
+              <circle cx="42" cy="2" r="1" fill="#334155" />
+              <circle cx="62" cy="2" r="1" fill="#334155" />
+              <circle cx="82" cy="2" r="1" fill="#334155" />
+              {/* Row 2 */}
+              <circle cx="2" cy="22" r="1" fill="#334155" />
+              <circle cx="22" cy="22" r="1" fill="#334155" />
+              <circle cx="42" cy="22" r="1" fill="#334155" />
+              <circle cx="62" cy="22" r="1" fill="#334155" />
+              <circle cx="82" cy="22" r="1" fill="#334155" />
+              {/* Row 3 */}
+              <circle cx="2" cy="42" r="1" fill="#334155" />
+              <circle cx="22" cy="42" r="1" fill="#334155" />
+              <circle cx="42" cy="42" r="1" fill="#334155" />
+              <circle cx="62" cy="42" r="1" fill="#334155" />
+              <circle cx="82" cy="42" r="1" fill="#334155" />
+              {/* Row 4 */}
+              <circle cx="2" cy="62" r="1" fill="#334155" />
+              <circle cx="22" cy="62" r="1" fill="#334155" />
+              <circle cx="42" cy="62" r="1" fill="#334155" />
+              <circle cx="62" cy="62" r="1" fill="#334155" />
+              <circle cx="82" cy="62" r="1" fill="#334155" />
+              {/* Row 5 */}
+              <circle cx="2" cy="82" r="1" fill="#334155" />
+              <circle cx="22" cy="82" r="1" fill="#334155" />
+              <circle cx="42" cy="82" r="1" fill="#334155" />
+              <circle cx="62" cy="82" r="1" fill="#334155" />
+              <circle cx="82" cy="82" r="1" fill="#334155" />
+            </pattern>
+          </defs>
+
+          <rect x="-5000" y="-5000" width="10000" height="10000" fill="url(#grid)" />
+
+          {rooms.map((room) => (<RoomSvg
+            key={room.id}
+            room={room}
+            cats={cats.filter((c) => c.roomId === room.id)}
+            editMode={editMode}
+            onUpdate={onRoomUpdate}
+            onCommit={onRoomCommit}
+          />
           ))}
         </svg>
 
