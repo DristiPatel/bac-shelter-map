@@ -257,7 +257,7 @@ function App() {
       >
         {/* 🐈 In-Shelter (Draggable) */}
         <CatList
-          title="🏠 In Shelter"
+          title={`In Shelter (${unassignedShelterCats.length}🐱)`}
           cats={unassignedShelterCats}
           draggable
           droppableId="shelter-list"
@@ -282,7 +282,7 @@ function App() {
               marginBottom: "0.5rem",
             }}
           >
-            <h3 style={{ margin: 0 }}>Floorplan</h3>
+            <h3 style={{ margin: 0 }}>{`Floorplan (${inCustodyCats.filter(c => c.roomId).length}🐱)`}</h3>
             <Tooltip title={editMode ? "Exit Edit Mode" : "Edit Floorplan"}>
               <IconButton
                 onClick={() => setEditMode((v) => !v)}
@@ -327,7 +327,7 @@ function App() {
 
         {/* 🏡 Foster (Read-only) */}
         <CatList
-          title="🏡 In Foster"
+          title={`In Foster (${unassignedFosterCats.length}🐱)`}
           cats={unassignedFosterCats}
           draggable
           droppableId="foster-list"
